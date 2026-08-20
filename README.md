@@ -6,10 +6,21 @@
 
 ```bash
 npm install
-npm run dev        # режим разработки (http://localhost:5173)
+npm run dev        # режим разработки (http://localhost:5180)
 npm run build      # production-сборка в dist/
-npm run preview    # предпросмотр собранного приложения
+npm run preview    # предпросмотр собранного приложения (http://localhost:5181/web-schedule/)
 ```
+
+## Деплой на GitHub Pages
+
+Сайт публикуется автоматически через GitHub Actions (`.github/workflows/deploy.yml`) при пуше в `main`:
+
+**https://ezy4me.github.io/web-schedule/**
+
+Требования:
+- В настройках репозитория **Settings → Pages** источник должен быть **GitHub Actions** (`build_type: workflow`).
+- В **Settings → Actions → General** разрешены Actions (Workflow permissions: read and write).
+- База пути `base: '/web-schedule/'` задана в `vite.config.js` (совпадает с именем репозитория).
 
 ## Источник данных
 
@@ -40,7 +51,17 @@ npm run preview    # предпросмотр собранного прилож�
 - Карточки пар, отсортированные по времени, с цветными бейджами типов
 - Empty-state «В этот день пар нет 🎉»
 - Mobile-first адаптивность
-- **Загрузка расписания из JSON-файла** (кнопка «Загрузить JSON»)
+- **Выбор расписания**: выпадающий список с встроенным расписанием и файлами `Шумилкин А.О.` / `Максимов Р.С.` (из `public/`)
+- **Загрузка расписания из своего JSON-файла** (кнопка «Свой JSON»)
+
+## Готовые файлы расписания
+
+В папке `public/` лежат два расписания, которые можно выбрать в интерфейсе:
+
+- `shumilkin.json` — расписание Шумилкина А.О. (группы 42xx / 43xx / 44xx)
+- `maximov.json` — расписание Максимова Р.С. (группы 42xx / 44xx)
+
+Чтобы добавить новое расписание, положите файл в `public/` и добавьте его в массив `SCHEDULE_SOURCES` в `src/App.jsx`.
 
 ## Формат загружаемого JSON
 
@@ -80,4 +101,4 @@ npm run preview    # предпросмотр собранного прилож�
 }
 ```
 
-Пример файла в формате 1 — `example-schedule.json` в корне проекта.
+Примеры файлов в формате 1 — `public/shumilkin.json` и `public/maximov.json`.

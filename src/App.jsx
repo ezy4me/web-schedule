@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2 } from 'lucide-react'
 import { getPairsForDate, getWeekType, getDefaultData, normalizeSchedule } from './utils/schedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
@@ -9,12 +9,29 @@ import CalendarPicker from './components/CalendarPicker.jsx'
 import Filters from './components/Filters.jsx'
 import LessonCard from './components/LessonCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
+import NiceSelect from './components/NiceSelect.jsx'
+
+// Доступные источники расписания (JSON-файлы лежат в public/)
+const SCHEDULE_SOURCES = [
+  { id: 'builtin', label: 'Встроенное расписание', url: null },
+  { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
+  { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
+]
 
 function getDefaultDate() {
   const now = new Date()
   const start = new Date(now.getFullYear(), 8, 1)
   const end = new Date(now.getFullYear(), 11, 31)
   return now >= start && now <= end ? now : start
+}
+
+function hasScheduleData(normalized) {
+  if (normalized.schedule_by_date) return Object.keys(normalized.schedule_by_date).length > 0
+  return (
+    Object.keys(normalized.odd_week).length > 0 ||
+    Object.keys(normalized.even_week).length > 0 ||
+    Object.keys(normalized.single_events).length > 0
+  )
 }
 
 export default function App() {
@@ -24,6 +41,8 @@ export default function App() {
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
   const [data, setData] = useState(getDefaultData)
+  const [sourceId, setSourceId] = useState('builtin')
+  const [loading, setLoading] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const fileInputRef = useRef(null)
 
@@ -49,7 +68,52 @@ export default function App() {
     setShowPicker(false)
   }
 
-  // Загрузка JSON-файла с расписанием
+  // Применение нормализованных данных
+  function applyData(normalized, label, ok) {
+    setData({ ...normalized, isCustom: true, sourceLabel: label })
+    setGroup('all')
+    setType('all')
+    setQuery('')
+    setImportMsg(ok ? { ok: true, text: label } : { ok: false, text: label })
+    setTimeout(() => setImportMsg(null), 4000)
+  }
+
+  // Загрузка расписания по URL (JSON-файл из public/)
+  async function loadUrl(url, label) {
+    setLoading(true)
+    setImportMsg(null)
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const parsed = await res.json()
+      const normalized = normalizeSchedule(parsed)
+      if (!hasScheduleData(normalized)) throw new Error('Файл не содержит данных расписания')
+      applyData(normalized, `Загружено: ${label} (${normalized.groups.length} групп)`, true)
+    } catch (err) {
+      applyData(getDefaultData(), `Не удалось загрузить ${label} (${err.message}). Показано встроенное.`, false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Смена источника расписания
+  function handleSourceChange(id) {
+    setSourceId(id)
+    const src = SCHEDULE_SOURCES.find((s) => s.id === id)
+    if (!src) return
+    if (!src.url) {
+      setData(getDefaultData())
+      setSourceId('builtin')
+      setGroup('all')
+      setType('all')
+      setQuery('')
+      setImportMsg(null)
+      return
+    }
+    loadUrl(src.url, src.label)
+  }
+
+  // Загрузка JSON-файла с расписанием (локальный файл)
   function handleFile(e) {
     const file = e.target.files && e.target.files[0]
     e.target.value = ''
@@ -59,20 +123,11 @@ export default function App() {
       try {
         const parsed = JSON.parse(reader.result)
         const normalized = normalizeSchedule(parsed)
-        const hasData = normalized.schedule_by_date
-          ? Object.keys(normalized.schedule_by_date).length > 0
-          : Object.keys(normalized.odd_week).length > 0 ||
-            Object.keys(normalized.even_week).length > 0 ||
-            Object.keys(normalized.single_events).length > 0
-        if (!hasData) {
+        if (!hasScheduleData(normalized)) {
           throw new Error('Файл не содержит данных расписания')
         }
-        setData({ ...normalized, isCustom: true })
-        setGroup('all')
-        setType('all')
-        setQuery('')
-        setImportMsg({ ok: true, text: `Расписание загружено (${file.name})` })
-        setTimeout(() => setImportMsg(null), 4000)
+        setSourceId('custom')
+        applyData(normalized, `Расписание загружено (${file.name}) · ${normalized.groups.length} групп`, true)
       } catch (err) {
         setImportMsg({ ok: false, text: `Ошибка: ${err.message}` })
         setTimeout(() => setImportMsg(null), 5000)
@@ -82,6 +137,7 @@ export default function App() {
   }
 
   function resetData() {
+    setSourceId('builtin')
     setData(getDefaultData())
     setGroup('all')
     setType('all')
@@ -114,32 +170,52 @@ export default function App() {
           </div>
         </header>
 
-        {/* Загрузка JSON */}
+        {/* Выбор расписания + загрузка JSON */}
         <div className="mb-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-full sm:w-64">
+              <NiceSelect
+                label="Расписание"
+                value={sourceId}
+                onChange={handleSourceChange}
+                options={SCHEDULE_SOURCES.map((s) => ({ value: s.id, label: s.label }))}
+                icon={CalendarHeart}
+                allLabel="Выберите расписание"
+              />
+            </div>
             <button
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
             >
               <UploadCloud size={16} />
-              Загрузить JSON
+              Свой JSON
             </button>
-            {data.isCustom && (
-              <button
-                onClick={resetData}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-              >
-                <X size={15} />
-                Сбросить к встроенному
-              </button>
-            )}
-            {data.isCustom && !importMsg && (
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
-                <CheckCircle2 size={13} />
-                Загружено расписание ({data.groups.length} групп)
+            {loading && (
+              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                <Loader2 size={16} className="animate-spin" />
+                Загрузка...
               </span>
             )}
+            {sourceId !== 'builtin' && !loading && (
+              <button
+                onClick={resetData}
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                <X size={15} />
+                Сбросить
+              </button>
+            )}
           </div>
+
+          {data.isCustom && sourceId !== 'builtin' && !importMsg && (
+            <div className="mt-2">
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                <CheckCircle2 size={13} />
+                {data.sourceLabel || `Загружено (${data.groups.length} групп)`}
+              </span>
+            </div>
+          )}
+
           {importMsg && (
             <div className={`mt-2 text-sm rounded-xl px-3 py-2 ${importMsg.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
               {importMsg.text}
