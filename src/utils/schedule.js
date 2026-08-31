@@ -6,10 +6,12 @@ import {
   SCHEDULE,
   SPECIAL_PAIRS,
   SINGLE_EVENT_DATES,
+  TIME_SLOTS,
 } from '../data/schedule.js'
 
 export const DDMM = 'dd.MM'
 export const FULL_DATE = 'dd.MM.yyyy'
+export { TIME_SLOTS }
 
 // Преобразование "DD.MM" в полноценную дату текущего года
 export function parseDDMM(str, year = new Date().getFullYear()) {
@@ -246,6 +248,42 @@ function applyFilters(pairs, group, filters) {
   }
   // Сортировка по времени
   return out.sort((a, b) => a.time.localeCompare(b.time))
+}
+
+// Построение таймлайна с окнами: между первой и последней парой пустые слоты — «окна»
+export function buildTimeline(pairs) {
+  if (!pairs.length) return []
+  const slots = TIME_SLOTS
+  const byTime = new Map()
+  for (const p of pairs) {
+    if (!byTime.has(p.time)) byTime.set(p.time, [])
+    byTime.get(p.time).push(p)
+  }
+  const indices = pairs.map((p) => slots.indexOf(p.time)).filter((i) => i >= 0)
+  if (!indices.length) return pairs.map((p) => ({ type: 'lesson', lesson: p }))
+  const firstIdx = Math.min(...indices)
+  const lastIdx = Math.max(...indices)
+  const items = []
+  for (let i = firstIdx; i <= lastIdx; i++) {
+    const slot = slots[i]
+    const lessons = byTime.get(slot)
+    if (lessons && lessons.length) {
+      for (const l of lessons) items.push({ type: 'lesson', lesson: l })
+    } else {
+      items.push({ type: 'window', time: slot })
+    }
+  }
+  // пары с временем вне сетки (если вдруг) — добавим в конец
+  for (const p of pairs) {
+    if (!slots.includes(p.time) && !items.some((it) => it.type === 'lesson' && it.lesson === p)) {
+      items.push({ type: 'lesson', lesson: p })
+    }
+  }
+  return items.sort((a, b) => {
+    const ta = a.type === 'window' ? a.time : a.lesson.time
+    const tb = b.type === 'window' ? b.time : b.lesson.time
+    return ta.localeCompare(tb)
+  })
 }
 
 // Формирование диапазона дат семестра (сентябрь-декабрь текущего года)

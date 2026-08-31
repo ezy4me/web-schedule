@@ -2,12 +2,13 @@ import React, { useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2 } from 'lucide-react'
-import { getPairsForDate, getWeekType, getDefaultData, normalizeSchedule } from './utils/schedule.js'
+import { getPairsForDate, getWeekType, getDefaultData, normalizeSchedule, buildTimeline } from './utils/schedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
 import CalendarPicker from './components/CalendarPicker.jsx'
 import Filters from './components/Filters.jsx'
 import LessonCard from './components/LessonCard.jsx'
+import WindowCard from './components/WindowCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import NiceSelect from './components/NiceSelect.jsx'
 
@@ -53,6 +54,9 @@ export default function App() {
     () => getPairsForDate(selected, group, { type, query }, data),
     [selected, group, type, query, data]
   )
+
+  const timeline = useMemo(() => buildTimeline(pairs), [pairs])
+  const windowCount = timeline.filter((it) => it.type === 'window').length
 
   const hasFilters = group !== 'all' || type !== 'all' || query.trim() !== ''
 
@@ -282,11 +286,15 @@ export default function App() {
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-slate-500 font-medium">
-                {pairs.length} пар · {format(selected, 'd MMMM', { locale: ru })}
+                {pairs.length} пар{windowCount ? ` · ${windowCount} ${windowCount === 1 ? 'окно' : windowCount < 5 ? 'окна' : 'окон'}` : ''} · {format(selected, 'd MMMM', { locale: ru })}
               </p>
-              {pairs.map((p, i) => (
-                <LessonCard key={`${p.time}-${p.subject}-${p.group}-${i}`} lesson={p} />
-              ))}
+              {timeline.map((item, i) =>
+                item.type === 'window' ? (
+                  <WindowCard key={`window-${item.time}-${i}`} time={item.time} />
+                ) : (
+                  <LessonCard key={`${item.lesson.time}-${item.lesson.subject}-${item.lesson.group}-${i}`} lesson={item.lesson} />
+                )
+              )}
             </div>
           )}
         </div>
