@@ -189,10 +189,49 @@ export function getDefaultData() {
   })
 }
 
+// Объединение одинаковых пар (одинаковое время/предмет/тип/аудитория) в одну,
+// собирая все группы в списке — чтобы лекция для нескольких групп была одной карточкой.
+function mergeLectures(pairs) {
+  const map = new Map()
+  for (const p of pairs) {
+    const key = [p.time, p.subject, p.type, p.room, p.teacher, p.special ? 's' : ''].join('|')
+    if (!map.has(key)) {
+      map.set(key, {
+        ...p,
+        group: String(p.group || ''),
+        groups: String(p.group || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      })
+      continue
+    }
+    const existing = map.get(key)
+    const add = String(p.group || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    for (const g of add) {
+      if (!existing.groups.includes(g)) existing.groups.push(g)
+    }
+    existing.group = existing.groups.join(', ')
+  }
+  return [...map.values()]
+}
+
 function applyFilters(pairs, group, filters) {
   let out = pairs
   if (group && group !== 'all') {
-    out = out.filter((p) => p.group === group)
+    const g = String(group)
+    out = out.filter((p) => {
+      const groups = String(p.group || '')
+        .split(',')
+        .map((s) => s.trim())
+      return groups.includes(g)
+    })
+  } else {
+    // Показываем все группы — объединяем одинаковые пары в одну карточку
+    out = mergeLectures(out)
   }
   if (filters.type && filters.type !== 'all') {
     out = out.filter((p) => p.type === filters.type)

@@ -35,10 +35,24 @@ export default function LessonCard({ lesson }) {
             <MapPin size={14} className="text-slate-400" />
             {lesson.room || '—'}
           </span>
-          <span className="flex items-center gap-1.5">
-            <Users size={14} className="text-slate-400" />
-            {lesson.group}
-          </span>
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <Users size={14} className="text-slate-400 shrink-0" />
+          {lesson.groups && lesson.groups.length > 0
+            ? lesson.groups.map((g) => (
+                <span
+                  key={g}
+                  className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-slate-200"
+                >
+                  {g}
+                </span>
+              ))
+            : (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-slate-200">
+                  {lesson.group}
+                </span>
+              )}
         </div>
 
         {lesson.special && (
