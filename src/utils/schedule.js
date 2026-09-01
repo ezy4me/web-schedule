@@ -132,6 +132,8 @@ function fromFlatArray(entries) {
           type: e.type,
           subject: e.subject,
           room: e.room,
+          teacher: e.teacher || null,
+          parity: e.parity || null,
         })
       }
     }
@@ -243,7 +245,8 @@ function applyFilters(pairs, group, filters) {
     out = out.filter(
       (p) =>
         (p.subject && p.subject.toLowerCase().includes(q)) ||
-        (p.room && p.room.toLowerCase().includes(q))
+        (p.room && p.room.toLowerCase().includes(q)) ||
+        (p.teacher && p.teacher.toLowerCase().includes(q))
     )
   }
   // Сортировка по времени

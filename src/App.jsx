@@ -15,6 +15,8 @@ import NiceSelect from './components/NiceSelect.jsx'
 // Доступные источники расписания (JSON-файлы лежат в public/)
 const SCHEDULE_SOURCES = [
   { id: 'builtin', label: 'Встроенное расписание', url: null },
+  { id: 'kai', label: 'КАИ (сайт)', url: `${import.meta.env.BASE_URL}kai.json` },
+  { id: 'excel', label: 'КАИ (Excel)', url: `${import.meta.env.BASE_URL}excel.json` },
   { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
   { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
 ]

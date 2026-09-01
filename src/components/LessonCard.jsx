@@ -20,9 +20,16 @@ export default function LessonCard({ lesson }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-slate-800 leading-snug">{lesson.subject}</h3>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ring-1 shrink-0 ${style.badge}`}>
-            <Icon size={12} />
-            {lesson.type}
+          <span className="flex items-center gap-1.5 shrink-0">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ring-1 ${style.badge}`}>
+              <Icon size={12} />
+              {lesson.type}
+            </span>
+            {lesson.parity && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200">
+                {lesson.parity}
+              </span>
+            )}
           </span>
         </div>
 
