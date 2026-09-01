@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2 } from 'lucide-react'
-import { getPairsForDate, getWeekType, getDefaultData, normalizeSchedule, buildTimeline } from './utils/schedule.js'
+import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline } from './utils/schedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
 import CalendarPicker from './components/CalendarPicker.jsx'
@@ -11,15 +11,19 @@ import LessonCard from './components/LessonCard.jsx'
 import WindowCard from './components/WindowCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import NiceSelect from './components/NiceSelect.jsx'
+import kaiData from './data/kai.json'
 
 // Доступные источники расписания (JSON-файлы лежат в public/)
 const SCHEDULE_SOURCES = [
-  { id: 'builtin', label: 'Встроенное расписание', url: null },
   { id: 'kai', label: 'КАИ (сайт)', url: `${import.meta.env.BASE_URL}kai.json` },
   { id: 'excel', label: 'КАИ (Excel)', url: `${import.meta.env.BASE_URL}excel.json` },
   { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
   { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
 ]
+
+function getKaiData() {
+  return normalizeSchedule(kaiData)
+}
 
 function getDefaultDate() {
   const now = new Date()
@@ -43,8 +47,8 @@ export default function App() {
   const [group, setGroup] = useState('all')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
-  const [data, setData] = useState(getDefaultData)
-  const [sourceId, setSourceId] = useState('builtin')
+  const [data, setData] = useState(getKaiData)
+  const [sourceId, setSourceId] = useState('kai')
   const [loading, setLoading] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const fileInputRef = useRef(null)
@@ -96,7 +100,7 @@ export default function App() {
       if (!hasScheduleData(normalized)) throw new Error('Файл не содержит данных расписания')
       applyData(normalized, `Загружено: ${label} (${normalized.groups.length} групп)`, true)
     } catch (err) {
-      applyData(getDefaultData(), `Не удалось загрузить ${label} (${err.message}). Показано встроенное.`, false)
+      applyData(getKaiData(), `Не удалось загрузить ${label} (${err.message}). Показано КАИ (сайт).`, false)
     } finally {
       setLoading(false)
     }
@@ -107,15 +111,6 @@ export default function App() {
     setSourceId(id)
     const src = SCHEDULE_SOURCES.find((s) => s.id === id)
     if (!src) return
-    if (!src.url) {
-      setData(getDefaultData())
-      setSourceId('builtin')
-      setGroup('all')
-      setType('all')
-      setQuery('')
-      setImportMsg(null)
-      return
-    }
     loadUrl(src.url, src.label)
   }
 
@@ -143,8 +138,8 @@ export default function App() {
   }
 
   function resetData() {
-    setSourceId('builtin')
-    setData(getDefaultData())
+    setSourceId('kai')
+    setData(getKaiData())
     setGroup('all')
     setType('all')
     setQuery('')
@@ -202,7 +197,7 @@ export default function App() {
                 Загрузка...
               </span>
             )}
-            {sourceId !== 'builtin' && !loading && (
+            {sourceId !== 'kai' && !loading && (
               <button
                 onClick={resetData}
                 className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
@@ -213,7 +208,7 @@ export default function App() {
             )}
           </div>
 
-          {data.isCustom && sourceId !== 'builtin' && !importMsg && (
+          {data.isCustom && sourceId !== 'kai' && !importMsg && (
             <div className="mt-2">
               <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
                 <CheckCircle2 size={13} />
