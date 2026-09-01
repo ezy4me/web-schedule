@@ -1,5 +1,5 @@
 import React from 'react'
-import { Clock, MapPin, User, Star, Users } from 'lucide-react'
+import { Clock, MapPin, User, Star, Users, CalendarDays } from 'lucide-react'
 import { TYPE_STYLES } from '../constants.js'
 
 export default function LessonCard({ lesson }) {
@@ -61,6 +61,21 @@ export default function LessonCard({ lesson }) {
                 </span>
               )}
         </div>
+
+        {lesson.dates && lesson.dates.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <CalendarDays size={14} className="text-slate-400 shrink-0" />
+            <span className="text-xs text-slate-500 mr-1">Даты:</span>
+            {lesson.dates.map((d) => (
+              <span
+                key={d}
+                className="px-1.5 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+        )}
 
         {lesson.special && (
           <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">

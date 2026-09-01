@@ -134,6 +134,8 @@ function fromFlatArray(entries) {
           room: e.room,
           teacher: e.teacher || null,
           parity: e.parity || null,
+          dates: [...dateList],
+          day: e.day || null,
         })
       }
     }
