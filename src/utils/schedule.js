@@ -291,12 +291,13 @@ export function buildTimeline(pairs) {
   })
 }
 
-// Формирование диапазона дат для навигации — весь календарный год.
-// Листать можно свободно в прошлое и будущее; пары есть только на даты из данных.
-export function getYearDates(year = new Date().getFullYear()) {
+// Формирование диапазона дат для навигации — с 1 сентября по 31 декабря.
+// Отсчёт ленты идёт с начала семестра; пары есть только на даты из данных.
+export function getSeasonDates(year = new Date().getFullYear()) {
+  const start = parseDDMM(SEMESTER_START, year)
+  const end = parseDDMM(SEMESTER_END, year)
   const dates = []
-  const cur = new Date(year, 0, 1)
-  const end = new Date(year, 11, 31)
+  const cur = new Date(start)
   while (cur <= end) {
     dates.push(new Date(cur))
     cur.setDate(cur.getDate() + 1)

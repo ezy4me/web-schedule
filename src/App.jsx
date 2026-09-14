@@ -303,11 +303,18 @@ export default function App() {
               Календарь
             </button>
             {showPicker && (
-              <CalendarPicker
-                selected={selected}
-                onSelect={setSelected}
-                onClose={() => setShowPicker(false)}
-              />
+              <>
+                <div
+                  className="fixed inset-0 z-10 cursor-default"
+                  onClick={() => setShowPicker(false)}
+                  aria-hidden="true"
+                />
+                <CalendarPicker
+                  selected={selected}
+                  onSelect={setSelected}
+                  onClose={() => setShowPicker(false)}
+                />
+              </>
             )}
           </div>
         </div>

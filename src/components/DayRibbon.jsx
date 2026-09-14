@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { format, isSameDay, isSameMonth, addDays, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { getYearDates } from '../utils/schedule.js'
+import { getSeasonDates } from '../utils/schedule.js'
 
 function weekLabel(selected) {
   const start = startOfWeek(selected, { weekStartsOn: 1 })
@@ -16,7 +16,7 @@ function weekLabel(selected) {
 // Горизонтальная лента дней (mobile-first, с прокруткой).
 // При открытии и смене даты автоматически прокручивается к актуальной неделе.
 export default function DayRibbon({ selected, onSelect }) {
-  const dates = useMemo(() => getYearDates(selected.getFullYear()), [selected.getFullYear()])
+  const dates = useMemo(() => getSeasonDates(selected.getFullYear()), [selected.getFullYear()])
   const listRef = useRef(null)
   const activeRef = useRef(null)
   const firstRender = useRef(true)

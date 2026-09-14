@@ -2,17 +2,17 @@ import React, { useMemo, useState } from 'react'
 import { format, startOfMonth, endOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, addMonths, subMonths } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { getYearDates, getWeekType, toDDMM } from '../utils/schedule.js'
+import { getSeasonDates, getWeekType, toDDMM } from '../utils/schedule.js'
 
 const WEEKDAY = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 // Всплывающий календарь-месяц
 export default function CalendarPicker({ selected, onSelect, onClose }) {
   const [viewMonth, setViewMonth] = useState(startOfMonth(selected))
-  const yearDates = useMemo(() => getYearDates(selected.getFullYear()), [selected])
-  const yearSet = useMemo(
-    () => new Set(yearDates.map((d) => d.toISOString())),
-    [yearDates]
+  const seasonDates = useMemo(() => getSeasonDates(selected.getFullYear()), [selected])
+  const seasonSet = useMemo(
+    () => new Set(seasonDates.map((d) => d.toISOString())),
+    [seasonDates]
   )
 
   const cells = useMemo(() => {
@@ -20,11 +20,11 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
     return Array.from({ length: 42 }, (_, i) => addDays(start, i))
   }, [viewMonth])
 
-  const canPrev = viewMonth > startOfMonth(new Date(selected.getFullYear(), 0, 1)) // январь
+  const canPrev = viewMonth > startOfMonth(new Date(selected.getFullYear(), 8, 1)) // сентябрь
   const canNext = viewMonth < startOfMonth(new Date(selected.getFullYear(), 11, 1)) // декабрь
 
   return (
-    <div className="absolute z-20 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 w-[300px]">
+    <div className="absolute z-20 mt-2 right-0 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 w-[300px] max-w-[calc(100vw-2rem)]">
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => canPrev && setViewMonth(subMonths(viewMonth, 1))}
@@ -51,7 +51,7 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
 
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell) => {
-          const inRange = yearSet.has(cell.toISOString())
+          const inRange = seasonSet.has(cell.toISOString())
           const active = isSameDay(cell, selected)
           const today = isSameDay(cell, new Date())
           const sameMonth = isSameMonth(cell, viewMonth)
