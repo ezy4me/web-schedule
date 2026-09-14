@@ -18,6 +18,7 @@ const SCHEDULE_SOURCES = [
   { id: 'kai', label: 'КАИ (сайт)', url: `${import.meta.env.BASE_URL}kai.json` },
   { id: 'excel', label: 'КАИ (Excel)', url: `${import.meta.env.BASE_URL}excel.json` },
   { id: 'excel-new', label: 'КАИ (Excel, новый)', url: `${import.meta.env.BASE_URL}excel-new.json` },
+  { id: 'excel-2', label: 'КАИ (Excel 2.0)', url: `${import.meta.env.BASE_URL}excel-2.json` },
   { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
   { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
 ]

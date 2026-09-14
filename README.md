@@ -61,6 +61,7 @@ npm run preview    # предпросмотр собранного прилож�
 - `kai.json` — расписание с сайта КАИ
 - `excel.json` — расписание из Excel
 - `excel-new.json` — обновлённое расписание из Excel
+- `excel-2.json` — расписание из Excel 2.0
 - `shumilkin.json` — расписание Шумилкина А.О. (группы 42xx / 43xx / 44xx)
 - `maximov.json` — расписание Максимова Р.С. (группы 42xx / 44xx)
 
