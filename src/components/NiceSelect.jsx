@@ -55,7 +55,7 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
   return (
     <div ref={rootRef} className="relative" onKeyDown={handleKeyDown}>
       {label && (
-        <span className="block text-xs font-medium text-slate-500 mb-1.5">{label}</span>
+        <span className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{label}</span>
       )}
       <button
         type="button"
@@ -64,11 +64,11 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
         onClick={() => setOpen((v) => !v)}
         className={`w-full flex items-center gap-2.5 pl-3.5 pr-3 py-2.5 text-sm rounded-xl border transition-all
           ${open
-            ? 'border-indigo-400 ring-2 ring-indigo-200 bg-white shadow-sm'
-            : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/30'}`}
+            ? 'border-indigo-400 ring-2 ring-indigo-200 dark:ring-indigo-500/40 bg-white dark:bg-slate-900 shadow-sm'
+            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-slate-800'}`}
       >
         {Icon && <Icon size={16} className={open ? 'text-indigo-500' : 'text-slate-400'} />}
-        <span className={`flex-1 text-left truncate ${value === 'all' ? 'text-slate-400' : 'font-medium text-slate-800'}`}>
+        <span className={`flex-1 text-left truncate ${value === 'all' ? 'text-slate-400 dark:text-slate-500' : 'font-medium text-slate-800 dark:text-slate-100'}`}>
           {current ? current.label : allLabel}
         </span>
         <ChevronDown
@@ -80,7 +80,7 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
       {open && (
         <ul
           role="listbox"
-          className="absolute z-30 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-64 overflow-y-auto py-1.5"
+          className="absolute z-30 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-64 overflow-y-auto py-1.5"
         >
           {list.map((o, i) => {
             const active = o.value === value
@@ -93,8 +93,8 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
                   onMouseEnter={() => setHighlighted(i)}
                   onClick={() => select(o.value)}
                   className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-left transition-colors
-                    ${i === highlighted ? 'bg-indigo-50' : ''}
-                    ${active ? 'font-semibold text-indigo-700' : 'text-slate-700'}`}
+                    ${i === highlighted ? 'bg-indigo-50 dark:bg-slate-800' : ''}
+                    ${active ? 'font-semibold text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}`}
                 >
                   {o.icon ? (
                     <span className={active ? 'text-indigo-500' : 'text-slate-400'}>{o.icon}</span>
@@ -102,7 +102,7 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
                     <span className="text-slate-300"><Icon size={16} /></span>
                   ) : null}
                   <span className="flex-1">{o.label}</span>
-                  {active && <Check size={16} className="text-indigo-600" />}
+                  {active && <Check size={16} className="text-indigo-600 dark:text-indigo-400" />}
                 </button>
               </li>
             )

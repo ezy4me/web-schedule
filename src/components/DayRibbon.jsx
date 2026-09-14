@@ -36,17 +36,17 @@ export default function DayRibbon({ selected, onSelect }) {
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => onSelect(addDays(selected, -7))}
-          className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           aria-label="Предыдущая неделя"
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="text-sm font-semibold text-slate-700 capitalize">
+        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 capitalize">
           {weekLabel(selected)}
         </div>
         <button
           onClick={() => onSelect(addDays(selected, 7))}
-          className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           aria-label="Следующая неделя"
         >
           <ChevronRight size={18} />
@@ -63,8 +63,8 @@ export default function DayRibbon({ selected, onSelect }) {
               ref={active ? activeRef : null}
               onClick={() => onSelect(d)}
               className={`snap-start flex flex-col items-center justify-center shrink-0 w-14 py-2 rounded-2xl border transition-colors
-                ${active ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}
-                ${today && !active ? 'ring-2 ring-indigo-300' : ''}`}
+                ${active ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                ${today && !active ? 'ring-2 ring-indigo-300 dark:ring-indigo-500' : ''}`}
             >
               <span className={`text-[10px] uppercase ${active ? 'text-indigo-100' : 'text-slate-400'}`}>
                 {format(d, 'EEE', { locale: ru })}

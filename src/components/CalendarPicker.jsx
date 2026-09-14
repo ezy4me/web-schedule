@@ -24,20 +24,20 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
   const canNext = viewMonth < startOfMonth(new Date(selected.getFullYear(), 11, 1)) // декабрь
 
   return (
-    <div className="absolute z-20 mt-2 right-0 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 w-[300px] max-w-[calc(100vw-2rem)]">
+    <div className="absolute z-20 mt-2 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-4 w-[300px] max-w-[calc(100vw-2rem)]">
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => canPrev && setViewMonth(subMonths(viewMonth, 1))}
           disabled={!canPrev}
-          className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+          className="p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="font-semibold capitalize">{format(viewMonth, 'LLLL yyyy', { locale: ru })}</div>
+        <div className="font-semibold capitalize text-slate-800 dark:text-slate-100">{format(viewMonth, 'LLLL yyyy', { locale: ru })}</div>
         <button
           onClick={() => canNext && setViewMonth(addMonths(viewMonth, 1))}
           disabled={!canNext}
-          className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+          className="p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
         >
           <ChevronRight size={18} />
         </button>
@@ -66,9 +66,9 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
                 onClose()
               }}
               className={`relative h-9 rounded-lg text-sm transition-colors flex items-center justify-center
-                ${!inRange ? 'text-slate-200 cursor-not-allowed' : sameMonth ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-100'}
+                ${!inRange ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed' : sameMonth ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'}
                 ${active ? 'bg-indigo-600 text-white hover:bg-indigo-600 font-bold' : ''}
-                ${today && !active ? 'ring-2 ring-indigo-300' : ''}`}
+                ${today && !active ? 'ring-2 ring-indigo-300 dark:ring-indigo-500' : ''}`}
             >
               {format(cell, 'd')}
               {inRange && dotColor && (
@@ -79,7 +79,7 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
         })}
       </div>
 
-      <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-500">
+      <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500" />Нечётная</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-500" />Чётная</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" />Особый день</span>
