@@ -291,12 +291,12 @@ export function buildTimeline(pairs) {
   })
 }
 
-// Формирование диапазона дат семестра (сентябрь-декабрь текущего года)
-export function getSemesterDates(year = new Date().getFullYear()) {
-  const start = parseDDMM(SEMESTER_START, year)
-  const end = parseDDMM(SEMESTER_END, year)
+// Формирование диапазона дат для навигации — весь календарный год.
+// Листать можно свободно в прошлое и будущее; пары есть только на даты из данных.
+export function getYearDates(year = new Date().getFullYear()) {
   const dates = []
-  const cur = new Date(start)
+  const cur = new Date(year, 0, 1)
+  const end = new Date(year, 11, 31)
   while (cur <= end) {
     dates.push(new Date(cur))
     cur.setDate(cur.getDate() + 1)

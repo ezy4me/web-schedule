@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2 } from 'lucide-react'
@@ -11,7 +11,7 @@ import LessonCard from './components/LessonCard.jsx'
 import WindowCard from './components/WindowCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import NiceSelect from './components/NiceSelect.jsx'
-import kaiData from './data/kai.json'
+import excel2Data from './data/excel-2.json'
 
 // Доступные источники расписания (JSON-файлы лежат в public/)
 const SCHEDULE_SOURCES = [
@@ -23,15 +23,39 @@ const SCHEDULE_SOURCES = [
   { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
 ]
 
-function getKaiData() {
-  return normalizeSchedule(kaiData)
+const DEFAULT_SOURCE_ID = 'excel-2'
+const LS_GROUP_KEY = 'schedule.group'
+const LS_SOURCE_KEY = 'schedule.source'
+
+// Данные по умолчанию — Excel 2.0 (встроены в бандл для мгновенного старта)
+function getDefaultData() {
+  return normalizeSchedule(excel2Data)
 }
 
+// Всегда актуальная дата — навигация по году позволяет листать куда угодно
 function getDefaultDate() {
-  const now = new Date()
-  const start = new Date(now.getFullYear(), 8, 1)
-  const end = new Date(now.getFullYear(), 11, 31)
-  return now >= start && now <= end ? now : start
+  return new Date()
+}
+
+function getInitialSourceId() {
+  try {
+    const saved = localStorage.getItem(LS_SOURCE_KEY)
+    if (saved && SCHEDULE_SOURCES.some((s) => s.id === saved)) return saved
+  } catch {
+    // localStorage недоступен — игнорируем
+  }
+  return DEFAULT_SOURCE_ID
+}
+
+function getInitialGroup() {
+  try {
+    const saved = localStorage.getItem(LS_GROUP_KEY)
+    const groups = normalizeSchedule(excel2Data).groups
+    if (saved && (saved === 'all' || groups.includes(saved))) return saved
+  } catch {
+    // localStorage недоступен — игнорируем
+  }
+  return 'all'
 }
 
 function hasScheduleData(normalized) {
@@ -46,14 +70,39 @@ function hasScheduleData(normalized) {
 export default function App() {
   const [selected, setSelected] = useState(getDefaultDate)
   const [showPicker, setShowPicker] = useState(false)
-  const [group, setGroup] = useState('all')
+  const [group, setGroup] = useState(getInitialGroup)
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
-  const [data, setData] = useState(getKaiData)
-  const [sourceId, setSourceId] = useState('kai')
+  const [data, setData] = useState(getDefaultData)
+  const [sourceId, setSourceId] = useState(getInitialSourceId)
   const [loading, setLoading] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const fileInputRef = useRef(null)
+
+  // Сохраняем выбор группы и источника между визитами
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_GROUP_KEY, group)
+    } catch {
+      // игнорируем
+    }
+  }, [group])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_SOURCE_KEY, sourceId)
+    } catch {
+      // игнорируем
+    }
+  }, [sourceId])
+
+  // Если в прошлый раз был выбран другой источник — догружаем его при старте
+  useEffect(() => {
+    if (sourceId === DEFAULT_SOURCE_ID) return
+    const src = SCHEDULE_SOURCES.find((s) => s.id === sourceId)
+    if (src) loadUrl(src.url, src.label)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const weekType = getWeekType(selected, data)
   const weekInfo = WEEK_TYPE_INFO[weekType]
@@ -102,7 +151,8 @@ export default function App() {
       if (!hasScheduleData(normalized)) throw new Error('Файл не содержит данных расписания')
       applyData(normalized, `Загружено: ${label} (${normalized.groups.length} групп)`, true)
     } catch (err) {
-      applyData(getKaiData(), `Не удалось загрузить ${label} (${err.message}). Показано КАИ (сайт).`, false)
+      setSourceId(DEFAULT_SOURCE_ID)
+      applyData(getDefaultData(), `Не удалось загрузить ${label} (${err.message}). Показано КАИ (Excel 2.0).`, false)
     } finally {
       setLoading(false)
     }
@@ -140,8 +190,8 @@ export default function App() {
   }
 
   function resetData() {
-    setSourceId('kai')
-    setData(getKaiData())
+    setSourceId(DEFAULT_SOURCE_ID)
+    setData(getDefaultData())
     setGroup('all')
     setType('all')
     setQuery('')
@@ -199,7 +249,7 @@ export default function App() {
                 Загрузка...
               </span>
             )}
-            {sourceId !== 'kai' && !loading && (
+            {sourceId !== DEFAULT_SOURCE_ID && !loading && (
               <button
                 onClick={resetData}
                 className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
@@ -210,7 +260,7 @@ export default function App() {
             )}
           </div>
 
-          {data.isCustom && sourceId !== 'kai' && !importMsg && (
+          {data.isCustom && sourceId !== DEFAULT_SOURCE_ID && !importMsg && (
             <div className="mt-2">
               <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
                 <CheckCircle2 size={13} />
