@@ -291,6 +291,28 @@ export function buildTimeline(pairs) {
   })
 }
 
+// Длительность пары в минутах — для определения идущего сейчас занятия
+export const LESSON_DURATION_MIN = 90
+
+// Идёт ли пара прямо сейчас (время старта HH:MM, длительность 90 минут)
+export function isLessonNow(timeStr, now = new Date()) {
+  const [h, m] = String(timeStr).split(':').map(Number)
+  if (Number.isNaN(h) || Number.isNaN(m)) return false
+  const start = new Date(now)
+  start.setHours(h, m, 0, 0)
+  const end = new Date(start.getTime() + LESSON_DURATION_MIN * 60000)
+  return now >= start && now < end
+}
+
+// Множество ISO-дат без пар (выходные) — для маркировки в ленте и календаре
+export function buildEmptyDaySet(dates, group, data) {
+  const set = new Set()
+  for (const d of dates) {
+    if (getPairsForDate(d, group, {}, data).length === 0) set.add(d.toISOString())
+  }
+  return set
+}
+
 // Формирование диапазона дат для навигации — с 1 сентября по 31 декабря.
 // Отсчёт ленты идёт с начала семестра; пары есть только на даты из данных.
 export function getSeasonDates(year = new Date().getFullYear()) {

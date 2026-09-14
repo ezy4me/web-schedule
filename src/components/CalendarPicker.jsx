@@ -7,7 +7,7 @@ import { getSeasonDates, getWeekType, toDDMM } from '../utils/schedule.js'
 const WEEKDAY = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 // Всплывающий календарь-месяц
-export default function CalendarPicker({ selected, onSelect, onClose }) {
+export default function CalendarPicker({ selected, onSelect, onClose, emptyDays }) {
   const [viewMonth, setViewMonth] = useState(startOfMonth(selected))
   const seasonDates = useMemo(() => getSeasonDates(selected.getFullYear()), [selected])
   const seasonSet = useMemo(
@@ -53,6 +53,7 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
         {cells.map((cell) => {
           const inRange = seasonSet.has(cell.toISOString())
           const active = isSameDay(cell, selected)
+          const isWeekend = inRange && !active && emptyDays?.has(cell.toISOString())
           const today = isSameDay(cell, new Date())
           const sameMonth = isSameMonth(cell, viewMonth)
           const type = inRange ? getWeekType(cell) : null
@@ -66,7 +67,13 @@ export default function CalendarPicker({ selected, onSelect, onClose }) {
                 onClose()
               }}
               className={`relative h-9 rounded-lg text-sm transition-colors flex items-center justify-center
-                ${!inRange ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed' : sameMonth ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'}
+                ${!inRange
+                  ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed'
+                  : isWeekend
+                    ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/20'
+                    : sameMonth
+                      ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'}
                 ${active ? 'bg-indigo-600 text-white hover:bg-indigo-600 font-bold' : ''}
                 ${today && !active ? 'ring-2 ring-indigo-300 dark:ring-indigo-500' : ''}`}
             >

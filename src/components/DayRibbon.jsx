@@ -15,7 +15,7 @@ function weekLabel(selected) {
 
 // Горизонтальная лента дней (mobile-first, с прокруткой).
 // При открытии и смене даты автоматически прокручивается к актуальной неделе.
-export default function DayRibbon({ selected, onSelect }) {
+export default function DayRibbon({ selected, onSelect, emptyDays }) {
   const dates = useMemo(() => getSeasonDates(selected.getFullYear()), [selected.getFullYear()])
   const listRef = useRef(null)
   const activeRef = useRef(null)
@@ -57,13 +57,19 @@ export default function DayRibbon({ selected, onSelect }) {
         {dates.map((d) => {
           const active = isSameDay(d, selected)
           const today = isSameDay(d, new Date())
+          const isWeekend = !active && emptyDays?.has(d.toISOString())
           return (
             <button
               key={d.toISOString()}
               ref={active ? activeRef : null}
               onClick={() => onSelect(d)}
+              title={isWeekend ? 'Выходной — пар нет' : undefined}
               className={`snap-start flex flex-col items-center justify-center shrink-0 w-14 py-2 rounded-2xl border transition-colors
-                ${active ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                ${active
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                  : isWeekend
+                    ? 'bg-amber-50 dark:bg-amber-500/10 text-slate-700 dark:text-slate-300 border-amber-200 dark:border-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-500/20'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
                 ${today && !active ? 'ring-2 ring-indigo-300 dark:ring-indigo-500' : ''}`}
             >
               <span className={`text-[10px] uppercase ${active ? 'text-indigo-100' : 'text-slate-400'}`}>

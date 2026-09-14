@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
-import { format, addDays, startOfWeek } from 'date-fns'
+import { format, addDays, startOfWeek, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon } from 'lucide-react'
-import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline } from './utils/schedule.js'
+import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow } from './utils/schedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
 import CalendarPicker from './components/CalendarPicker.jsx'
@@ -92,7 +92,14 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
+  const [now, setNow] = useState(() => new Date())
   const fileInputRef = useRef(null)
+
+  // Живые часы для подсветки идущей пары (обновление каждые 30 секунд)
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30000)
+    return () => clearInterval(id)
+  }, [])
 
   // Тёмная тема: класс на <html>, сохранение выбора, цвет theme-color
   useEffect(() => {
@@ -142,6 +149,15 @@ export default function App() {
 
   const timeline = useMemo(() => buildTimeline(pairs), [pairs])
   const windowCount = timeline.filter((it) => it.type === 'window').length
+
+  // Дни без пар (выходные) для текущей группы — маркировка в ленте и календаре
+  const emptyDays = useMemo(
+    () => buildEmptyDaySet(getSeasonDates(selected.getFullYear()), group, data),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selected.getFullYear(), group, data]
+  )
+
+  const isTodaySelected = isSameDay(selected, now)
 
   const hasFilters = group !== 'all' || type !== 'all' || query.trim() !== ''
 
@@ -351,6 +367,7 @@ export default function App() {
                   selected={selected}
                   onSelect={setSelected}
                   onClose={() => setShowPicker(false)}
+                  emptyDays={emptyDays}
                 />
               </>
             )}
@@ -358,7 +375,7 @@ export default function App() {
         </div>
 
         {/* Лента дней */}
-        <DayRibbon selected={selected} onSelect={(d) => { setSelected(d); setShowPicker(false) }} />
+        <DayRibbon selected={selected} onSelect={(d) => { setSelected(d); setShowPicker(false) }} emptyDays={emptyDays} />
 
         {/* Фильтры */}
         <div className="mt-4">
@@ -386,7 +403,11 @@ export default function App() {
                 item.type === 'window' ? (
                   <WindowCard key={`window-${item.time}-${i}`} time={item.time} />
                 ) : (
-                  <LessonCard key={`${item.lesson.time}-${item.lesson.subject}-${item.lesson.group}-${i}`} lesson={item.lesson} />
+                  <LessonCard
+                    key={`${item.lesson.time}-${item.lesson.subject}-${item.lesson.group}-${i}`}
+                    lesson={item.lesson}
+                    isNow={isTodaySelected && isLessonNow(item.lesson.time, now)}
+                  />
                 )
               )}
             </div>

@@ -2,12 +2,15 @@ import React from 'react'
 import { Clock, MapPin, User, Star, Users, CalendarDays } from 'lucide-react'
 import { TYPE_STYLES } from '../constants.js'
 
-export default function LessonCard({ lesson }) {
+export default function LessonCard({ lesson, isNow }) {
   const style = TYPE_STYLES[lesson.type] || { badge: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300', icon: Clock, label: lesson.type }
   const Icon = style.icon
 
   return (
-    <div className="flex gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+    <div className={`flex gap-4 bg-white dark:bg-slate-900 border rounded-2xl p-4 shadow-sm transition-shadow
+      ${isNow
+        ? 'border-emerald-400 dark:border-emerald-500 ring-2 ring-emerald-300 dark:ring-emerald-500/50 shadow-md'
+        : 'border-slate-200 dark:border-slate-700'}`}>
       {/* Время */}
       <div className="flex flex-col items-center justify-center shrink-0">
         <div className="text-base font-bold text-slate-800 dark:text-slate-100">{lesson.time}</div>
@@ -28,6 +31,15 @@ export default function LessonCard({ lesson }) {
             {lesson.parity && (
               <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 ring-1 ring-indigo-200 dark:ring-indigo-400/30">
                 {lesson.parity}
+              </span>
+            )}
+            {isNow && (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500 text-white shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                </span>
+                Сейчас идёт
               </span>
             )}
           </span>
