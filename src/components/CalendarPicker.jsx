@@ -70,7 +70,7 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
                 ${!inRange
                   ? 'cursor-not-allowed text-zinc-200 dark:text-zinc-700'
                   : isWeekend
-                    ? 'text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'
+                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400/90 dark:hover:bg-amber-500/20'
                     : sameMonth
                       ? 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
                       : 'text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'}
@@ -86,10 +86,11 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
         })}
       </div>
 
-      <div className="mt-3 flex items-center gap-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
         <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />Нечётная</span>
         <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-sky-500" />Чётная</span>
         <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rose-500" />Особый день</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />Выходной</span>
       </div>
     </div>
   )

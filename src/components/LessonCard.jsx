@@ -3,7 +3,7 @@ import { TYPE_STYLES } from '../constants.js'
 
 export default function LessonCard({ lesson, isNow }) {
   const style = TYPE_STYLES[lesson.type] || { dot: 'bg-zinc-400', label: lesson.type }
-  const groups = lesson.groups && lesson.groups.length > 0 ? lesson.groups.join(', ') : lesson.group
+  const groupList = lesson.groups && lesson.groups.length > 0 ? lesson.groups : lesson.group ? [lesson.group] : []
   const hasMeta = isNow || lesson.special || (lesson.notes && lesson.notes !== 'разовое')
 
   return (
@@ -27,9 +27,33 @@ export default function LessonCard({ lesson, isNow }) {
         {lesson.teacher && <span>{lesson.teacher}</span>}
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500">
-        <span>Гр. {groups}</span>
-        {lesson.dates && lesson.dates.length > 0 && <span>Даты: {lesson.dates.join(' · ')}</span>}
+      <div className="mt-2.5 space-y-1.5">
+        {groupList.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Группа</span>
+            {groupList.map((g) => (
+              <span
+                key={g}
+                className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-300"
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
+        {lesson.dates && lesson.dates.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Даты</span>
+            {lesson.dates.map((d) => (
+              <span
+                key={d}
+                className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-300"
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {hasMeta && (
