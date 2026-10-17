@@ -55,32 +55,32 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
   return (
     <div ref={rootRef} className="relative" onKeyDown={handleKeyDown}>
       {label && (
-        <span className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{label}</span>
+        <span className="mb-1.5 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
       )}
       <button
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center gap-2.5 rounded-xl border py-2.5 pl-3.5 pr-3 text-sm transition-all
+        className={`flex w-full items-center gap-2.5 rounded-lg border py-2.5 pl-3.5 pr-3 text-sm transition-colors
           ${open
-            ? 'border-violet-400 bg-white/90 ring-2 ring-violet-200/80 dark:border-violet-400/60 dark:bg-slate-900/90 dark:ring-violet-500/30'
-            : 'border-white/70 bg-white/70 hover:border-violet-300 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-violet-500/50 dark:hover:bg-slate-800'}`}
+            ? 'border-zinc-400 bg-white dark:border-zinc-600 dark:bg-zinc-900'
+            : 'border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700'}`}
       >
-        {Icon && <Icon size={16} className={open ? 'text-violet-500' : 'text-slate-400'} />}
-        <span className={`flex-1 truncate text-left ${value === 'all' ? 'text-slate-400 dark:text-slate-500' : 'font-medium text-slate-800 dark:text-slate-100'}`}>
+        {Icon && <Icon size={16} className="text-zinc-400" />}
+        <span className={`flex-1 truncate text-left ${value === 'all' ? 'text-zinc-400 dark:text-zinc-500' : 'font-medium text-zinc-800 dark:text-zinc-100'}`}>
           {current ? current.label : allLabel}
         </span>
         <ChevronDown
           size={16}
-          className={`text-slate-400 transition-transform duration-200 ${open ? 'rotate-180 text-violet-500' : ''}`}
+          className={`text-zinc-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
       {open && (
         <ul
           role="listbox"
-          className="glass-strong absolute z-30 mt-2 max-h-64 w-full animate-pop overflow-y-auto rounded-2xl border border-white/70 py-1.5 shadow-glass dark:border-white/10"
+          className="absolute z-30 mt-1.5 max-h-64 w-full overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-pop dark:border-zinc-800 dark:bg-zinc-900"
         >
           {list.map((o, i) => {
             const active = o.value === value
@@ -93,16 +93,16 @@ export default function NiceSelect({ value, onChange, options, icon: Icon, label
                   onMouseEnter={() => setHighlighted(i)}
                   onClick={() => select(o.value)}
                   className={`flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm transition-colors
-                    ${i === highlighted ? 'bg-violet-50/80 dark:bg-violet-500/10' : ''}
-                    ${active ? 'font-semibold text-violet-700 dark:text-violet-300' : 'text-slate-700 dark:text-slate-200'}`}
+                    ${i === highlighted ? 'bg-zinc-100 dark:bg-zinc-800' : ''}
+                    ${active ? 'font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-300'}`}
                 >
                   {o.icon ? (
-                    <span className={active ? 'text-violet-500' : 'text-slate-400'}>{o.icon}</span>
+                    <span className="text-zinc-400">{o.icon}</span>
                   ) : Icon ? (
-                    <span className="text-slate-300"><Icon size={16} /></span>
+                    <span className="text-zinc-300"><Icon size={16} /></span>
                   ) : null}
                   <span className="flex-1">{o.label}</span>
-                  {active && <Check size={16} className="text-violet-600 dark:text-violet-400" />}
+                  {active && <Check size={16} className="text-zinc-500 dark:text-zinc-400" />}
                 </button>
               </li>
             )

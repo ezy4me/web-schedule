@@ -112,7 +112,7 @@ export default function App() {
       // игнорируем
     }
     const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', dark ? '#020617' : '#7c3aed')
+    if (meta) meta.setAttribute('content', dark ? '#09090b' : '#fafafa')
   }, [theme])
 
   // Сохраняем выбор группы и источника между визитами
@@ -244,48 +244,39 @@ export default function App() {
   }
 
   return (
-    <div className="app-bg min-h-screen text-slate-800 dark:text-slate-100 transition-colors">
-      <div className="mx-auto max-w-3xl px-4 pb-28 pt-4 sm:pb-14">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 transition-colors dark:bg-zinc-950 dark:text-zinc-100">
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
         {/* Шапка */}
-        <header className="glass sticky top-2 z-30 mb-5 rounded-3xl border border-white/60 px-4 py-3.5 shadow-glass dark:border-white/10">
+        <header className="mb-5">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-gradient text-white shadow-glow">
-                <CalendarDays size={22} />
-              </span>
-              <div className="min-w-0">
-                <h1 className="truncate text-lg font-bold tracking-tight text-slate-800 dark:text-slate-50 sm:text-xl">
-                  Учебное расписание
-                </h1>
-                <p className="truncate text-xs capitalize text-slate-500 dark:text-slate-400 sm:text-sm">
-                  {format(selected, 'EEEE, d MMMM yyyy', { locale: ru })}
-                </p>
-              </div>
+            <div className="min-w-0">
+              <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <CalendarDays size={20} className="text-zinc-400" />
+                Учебное расписание
+              </h1>
+              <p className="mt-1 truncate text-sm capitalize text-zinc-500 dark:text-zinc-400">
+                {format(selected, 'EEEE, d MMMM yyyy', { locale: ru })}
+              </p>
             </div>
             <button
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-white/60 bg-white/70 text-slate-600 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
               aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
               title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
             >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             </button>
           </div>
 
           {/* Индикатор недели */}
-          <div className="mt-3 inline-flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${weekInfo.dot}`} />
-              <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${weekInfo.dot}`} />
-            </span>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${weekInfo.chip}`}>
-              {weekInfo.label}
-            </span>
+          <div className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className={`h-1.5 w-1.5 rounded-full ${weekInfo.dot}`} />
+            {weekInfo.label}
           </div>
         </header>
 
         {/* Выбор расписания + загрузка JSON */}
-        <section className="glass mb-4 rounded-3xl border border-white/60 p-3.5 shadow-soft dark:border-white/10">
+        <div className="mb-4">
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full sm:w-64">
               <NiceSelect
@@ -299,13 +290,13 @@ export default function App() {
             </div>
             <button
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              className="inline-flex items-center gap-2 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-400/25 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-800"
             >
               <UploadCloud size={16} />
               Свой JSON
             </button>
             {loading && (
-              <span className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                 <Loader2 size={16} className="animate-spin" />
                 Загрузка...
               </span>
@@ -313,7 +304,7 @@ export default function App() {
             {sourceId !== DEFAULT_SOURCE_ID && !loading && (
               <button
                 onClick={resetData}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
               >
                 <X size={15} />
                 Сбросить
@@ -323,7 +314,7 @@ export default function App() {
 
           {data.isCustom && sourceId !== DEFAULT_SOURCE_ID && !importMsg && (
             <div className="mt-2">
-              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 size={13} />
                 {data.sourceLabel || `Загружено (${data.groups.length} групп)`}
               </span>
@@ -331,7 +322,7 @@ export default function App() {
           )}
 
           {importMsg && (
-            <div className={`mt-2 text-sm rounded-xl px-3 py-2 ${importMsg.ok ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'}`}>
+            <div className={`mt-2 rounded-lg border px-3 py-2 text-sm ${importMsg.ok ? 'border-emerald-200 text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-400' : 'border-rose-200 text-rose-600 dark:border-rose-500/30 dark:text-rose-400'}`}>
               {importMsg.text}
             </div>
           )}
@@ -342,34 +333,34 @@ export default function App() {
             onChange={handleFile}
             className="hidden"
           />
-        </section>
+        </div>
 
         {/* Быстрые кнопки + календарь */}
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           <button
             onClick={() => handleQuick(goToday)}
-            className="rounded-full bg-brand-gradient px-3.5 py-1.5 text-sm font-semibold text-white shadow-glow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0"
+            className="rounded-lg bg-zinc-900 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
           >
             Сегодня
           </button>
           <button
             onClick={() => handleQuick(goTomorrow)}
-            className="rounded-full border border-white/60 bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-lg border border-zinc-200 px-3.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           >
             Завтра
           </button>
           <button
             onClick={() => handleQuick(goCurrentWeek)}
-            className="rounded-full border border-white/60 bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-lg border border-zinc-200 px-3.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           >
             Текущая неделя
           </button>
           <div className="relative ml-auto">
             <button
               onClick={() => setShowPicker((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full border border-white/60 bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
-              <CalendarRange size={15} className="text-violet-600 dark:text-violet-400" />
+              <CalendarRange size={15} className="text-zinc-400" />
               Календарь
             </button>
             {showPicker && (
@@ -411,9 +402,8 @@ export default function App() {
           {pairs.length === 0 ? (
             <EmptyState hasFilters={hasFilters} />
           ) : (
-            <div className="space-y-3">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-gradient" />
+            <div className="space-y-2.5">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 {pairs.length} пар{windowCount ? ` · ${windowCount} ${windowCount === 1 ? 'окно' : windowCount < 5 ? 'окна' : 'окон'}` : ''} · {format(selected, 'd MMMM', { locale: ru })}
               </p>
               {timeline.map((item, i) =>

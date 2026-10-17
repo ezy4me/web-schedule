@@ -36,24 +36,24 @@ export default function DayRibbon({ selected, onSelect, emptyDays }) {
       <div className="mb-2 flex items-center justify-between">
         <button
           onClick={() => onSelect(addDays(selected, -7))}
-          className="grid h-9 w-9 place-items-center rounded-xl border border-white/60 bg-white/70 text-slate-600 transition-colors hover:bg-white hover:text-violet-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-violet-300"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           aria-label="Предыдущая неделя"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={17} />
         </button>
-        <div className="rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs font-semibold capitalize text-slate-600 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-300">
+        <div className="text-sm font-medium capitalize text-zinc-500 dark:text-zinc-400">
           {weekLabel(selected)}
         </div>
         <button
           onClick={() => onSelect(addDays(selected, 7))}
-          className="grid h-9 w-9 place-items-center rounded-xl border border-white/60 bg-white/70 text-slate-600 transition-colors hover:bg-white hover:text-violet-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-violet-300"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           aria-label="Следующая неделя"
         >
-          <ChevronRight size={18} />
+          <ChevronRight size={17} />
         </button>
       </div>
 
-      <div ref={listRef} className="scrollbar-thin -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2">
+      <div ref={listRef} className="scrollbar-thin -mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-1.5">
         {dates.map((d) => {
           const active = isSameDay(d, selected)
           const today = isSameDay(d, new Date())
@@ -64,21 +64,18 @@ export default function DayRibbon({ selected, onSelect, emptyDays }) {
               ref={active ? activeRef : null}
               onClick={() => onSelect(d)}
               title={isWeekend ? 'Выходной — пар нет' : undefined}
-              className={`flex w-14 shrink-0 snap-start flex-col items-center justify-center rounded-2xl border py-2 transition-all
+              className={`flex w-12 shrink-0 snap-start flex-col items-center justify-center rounded-lg border py-2 transition-colors
                 ${active
-                  ? 'border-transparent bg-brand-gradient text-white shadow-glow-sm'
+                  ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
                   : isWeekend
-                    ? 'border-amber-200/70 bg-amber-50/80 text-slate-700 hover:bg-amber-100 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-slate-300 dark:hover:bg-amber-500/20'
-                    : 'border-white/60 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800'}
-                ${today && !active ? 'ring-2 ring-violet-400/70 dark:ring-violet-500/60' : ''}`}
+                    ? 'border-transparent text-zinc-400 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'
+                    : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800'}
+                ${today && !active ? 'ring-1 ring-inset ring-zinc-400 dark:ring-zinc-500' : ''}`}
             >
-              <span className={`text-[10px] uppercase ${active ? 'text-white/80' : 'text-slate-400'}`}>
+              <span className={`text-[10px] uppercase ${active ? 'text-zinc-300 dark:text-zinc-500' : 'text-zinc-400'}`}>
                 {format(d, 'EEE', { locale: ru })}
               </span>
-              <span className="text-base font-bold leading-tight">{format(d, 'd')}</span>
-              <span className={`text-[10px] ${active ? 'text-white/80' : 'text-slate-400'}`}>
-                {format(d, 'MMM', { locale: ru })}
-              </span>
+              <span className="text-base font-semibold leading-tight tabular-nums">{format(d, 'd')}</span>
             </button>
           )
         })}
