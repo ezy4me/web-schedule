@@ -11,7 +11,7 @@ import LessonCard from './components/LessonCard.jsx'
 import WindowCard from './components/WindowCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import NiceSelect from './components/NiceSelect.jsx'
-import excel2Data from './data/excel-2.json'
+import excel3Data from './data/excel-3.json'
 
 // Доступные источники расписания (JSON-файлы лежат в public/)
 const SCHEDULE_SOURCES = [
@@ -19,11 +19,12 @@ const SCHEDULE_SOURCES = [
   { id: 'excel', label: 'КАИ (Excel)', url: `${import.meta.env.BASE_URL}excel.json` },
   { id: 'excel-new', label: 'КАИ (Excel, новый)', url: `${import.meta.env.BASE_URL}excel-new.json` },
   { id: 'excel-2', label: 'КАИ (Excel 2.0)', url: `${import.meta.env.BASE_URL}excel-2.json` },
+  { id: 'excel-3', label: 'КАИ (Excel 3.0)', url: `${import.meta.env.BASE_URL}excel-3.json` },
   { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
   { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
 ]
 
-const DEFAULT_SOURCE_ID = 'excel-2'
+const DEFAULT_SOURCE_ID = 'excel-3'
 const LS_GROUP_KEY = 'schedule.group'
 const LS_SOURCE_KEY = 'schedule.source'
 const LS_THEME_KEY = 'schedule.theme'
@@ -41,9 +42,9 @@ function getInitialTheme() {
   return 'light'
 }
 
-// Данные по умолчанию — Excel 2.0 (встроены в бандл для мгновенного старта)
+// Данные по умолчанию — Excel 3.0 (встроены в бандл для мгновенного старта)
 function getDefaultData() {
-  return normalizeSchedule(excel2Data)
+  return normalizeSchedule(excel3Data)
 }
 
 // Всегда актуальная дата — навигация по году позволяет листать куда угодно
@@ -64,7 +65,7 @@ function getInitialSourceId() {
 function getInitialGroup() {
   try {
     const saved = localStorage.getItem(LS_GROUP_KEY)
-    const groups = normalizeSchedule(excel2Data).groups
+    const groups = normalizeSchedule(excel3Data).groups
     if (saved && (saved === 'all' || groups.includes(saved))) return saved
   } catch {
     // localStorage недоступен — игнорируем
@@ -111,7 +112,7 @@ export default function App() {
       // игнорируем
     }
     const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', dark ? '#020617' : '#6366f1')
+    if (meta) meta.setAttribute('content', dark ? '#020617' : '#7c3aed')
   }, [theme])
 
   // Сохраняем выбор группы и источника между визитами
@@ -196,7 +197,7 @@ export default function App() {
       applyData(normalized, `Загружено: ${label} (${normalized.groups.length} групп)`, true)
     } catch (err) {
       setSourceId(DEFAULT_SOURCE_ID)
-      applyData(getDefaultData(), `Не удалось загрузить ${label} (${err.message}). Показано КАИ (Excel 2.0).`, false)
+      applyData(getDefaultData(), `Не удалось загрузить ${label} (${err.message}). Показано КАИ (Excel 3.0).`, false)
     } finally {
       setLoading(false)
     }
@@ -243,42 +244,48 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-      <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="app-bg min-h-screen text-slate-800 dark:text-slate-100 transition-colors">
+      <div className="mx-auto max-w-3xl px-4 pb-28 pt-4 sm:pb-14">
         {/* Шапка */}
-        <header className="mb-5">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <CalendarDays className="text-indigo-600 dark:text-indigo-400" size={26} />
-              Учебное расписание
-            </h1>
+        <header className="glass sticky top-2 z-30 mb-5 rounded-3xl border border-white/60 px-4 py-3.5 shadow-glass dark:border-white/10">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-gradient text-white shadow-glow">
+                <CalendarDays size={22} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold tracking-tight text-slate-800 dark:text-slate-50 sm:text-xl">
+                  Учебное расписание
+                </h1>
+                <p className="truncate text-xs capitalize text-slate-500 dark:text-slate-400 sm:text-sm">
+                  {format(selected, 'EEEE, d MMMM yyyy', { locale: ru })}
+                </p>
+              </div>
+            </div>
             <button
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-              className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-white/60 bg-white/70 text-slate-600 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
               aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
               title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {format(selected, 'EEEE, d MMMM yyyy', { locale: ru })}
-          </p>
 
           {/* Индикатор недели */}
           <div className="mt-3 inline-flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${weekInfo.dot}`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${weekInfo.dot}`} />
+              <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${weekInfo.dot}`} />
+              <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${weekInfo.dot}`} />
             </span>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${weekInfo.chip}`}>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${weekInfo.chip}`}>
               {weekInfo.label}
             </span>
           </div>
         </header>
 
         {/* Выбор расписания + загрузка JSON */}
-        <div className="mb-4">
+        <section className="glass mb-4 rounded-3xl border border-white/60 p-3.5 shadow-soft dark:border-white/10">
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full sm:w-64">
               <NiceSelect
@@ -292,7 +299,7 @@ export default function App() {
             </div>
             <button
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              className="inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-400/30 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-400/25 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
             >
               <UploadCloud size={16} />
               Свой JSON
@@ -335,25 +342,34 @@ export default function App() {
             onChange={handleFile}
             className="hidden"
           />
-        </div>
+        </section>
 
         {/* Быстрые кнопки + календарь */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <button onClick={() => handleQuick(goToday)} className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => handleQuick(goToday)}
+            className="rounded-full bg-brand-gradient px-3.5 py-1.5 text-sm font-semibold text-white shadow-glow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0"
+          >
             Сегодня
           </button>
-          <button onClick={() => handleQuick(goTomorrow)} className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
+          <button
+            onClick={() => handleQuick(goTomorrow)}
+            className="rounded-full border border-white/60 bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
             Завтра
           </button>
-          <button onClick={() => handleQuick(goCurrentWeek)} className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
+          <button
+            onClick={() => handleQuick(goCurrentWeek)}
+            className="rounded-full border border-white/60 bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
             Текущая неделя
           </button>
           <div className="relative ml-auto">
             <button
               onClick={() => setShowPicker((v) => !v)}
-              className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5"
+              className="flex items-center gap-1.5 rounded-full border border-white/60 bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              <CalendarRange size={15} className="text-indigo-600 dark:text-indigo-400" />
+              <CalendarRange size={15} className="text-violet-600 dark:text-violet-400" />
               Календарь
             </button>
             {showPicker && (
@@ -396,7 +412,8 @@ export default function App() {
             <EmptyState hasFilters={hasFilters} />
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-gradient" />
                 {pairs.length} пар{windowCount ? ` · ${windowCount} ${windowCount === 1 ? 'окно' : windowCount < 5 ? 'окна' : 'окон'}` : ''} · {format(selected, 'd MMMM', { locale: ru })}
               </p>
               {timeline.map((item, i) =>

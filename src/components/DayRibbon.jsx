@@ -33,27 +33,27 @@ export default function DayRibbon({ selected, onSelect, emptyDays }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <button
           onClick={() => onSelect(addDays(selected, -7))}
-          className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          className="grid h-9 w-9 place-items-center rounded-xl border border-white/60 bg-white/70 text-slate-600 transition-colors hover:bg-white hover:text-violet-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-violet-300"
           aria-label="Предыдущая неделя"
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 capitalize">
+        <div className="rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs font-semibold capitalize text-slate-600 dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-300">
           {weekLabel(selected)}
         </div>
         <button
           onClick={() => onSelect(addDays(selected, 7))}
-          className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          className="grid h-9 w-9 place-items-center rounded-xl border border-white/60 bg-white/70 text-slate-600 transition-colors hover:bg-white hover:text-violet-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-violet-300"
           aria-label="Следующая неделя"
         >
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <div ref={listRef} className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+      <div ref={listRef} className="scrollbar-thin -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2">
         {dates.map((d) => {
           const active = isSameDay(d, selected)
           const today = isSameDay(d, new Date())
@@ -64,19 +64,19 @@ export default function DayRibbon({ selected, onSelect, emptyDays }) {
               ref={active ? activeRef : null}
               onClick={() => onSelect(d)}
               title={isWeekend ? 'Выходной — пар нет' : undefined}
-              className={`snap-start flex flex-col items-center justify-center shrink-0 w-14 py-2 rounded-2xl border transition-colors
+              className={`flex w-14 shrink-0 snap-start flex-col items-center justify-center rounded-2xl border py-2 transition-all
                 ${active
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                  ? 'border-transparent bg-brand-gradient text-white shadow-glow-sm'
                   : isWeekend
-                    ? 'bg-amber-50 dark:bg-amber-500/10 text-slate-700 dark:text-slate-300 border-amber-200 dark:border-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-500/20'
-                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
-                ${today && !active ? 'ring-2 ring-indigo-300 dark:ring-indigo-500' : ''}`}
+                    ? 'border-amber-200/70 bg-amber-50/80 text-slate-700 hover:bg-amber-100 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-slate-300 dark:hover:bg-amber-500/20'
+                    : 'border-white/60 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800'}
+                ${today && !active ? 'ring-2 ring-violet-400/70 dark:ring-violet-500/60' : ''}`}
             >
-              <span className={`text-[10px] uppercase ${active ? 'text-indigo-100' : 'text-slate-400'}`}>
+              <span className={`text-[10px] uppercase ${active ? 'text-white/80' : 'text-slate-400'}`}>
                 {format(d, 'EEE', { locale: ru })}
               </span>
               <span className="text-base font-bold leading-tight">{format(d, 'd')}</span>
-              <span className={`text-[10px] ${active ? 'text-indigo-100' : 'text-slate-400'}`}>
+              <span className={`text-[10px] ${active ? 'text-white/80' : 'text-slate-400'}`}>
                 {format(d, 'MMM', { locale: ru })}
               </span>
             </button>

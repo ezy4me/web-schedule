@@ -48,7 +48,7 @@ export default function Filters({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Поиск: дисциплина или аудитория..."
-          className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/40 focus:border-indigo-400 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+          className="w-full rounded-xl border border-white/70 bg-white/70 py-2.5 pl-10 pr-9 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200/80 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400/60 dark:focus:ring-violet-500/30"
         />
         {query && (
           <button onClick={() => onQueryChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">

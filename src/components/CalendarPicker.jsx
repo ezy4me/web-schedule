@@ -24,12 +24,12 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
   const canNext = viewMonth < startOfMonth(new Date(selected.getFullYear(), 11, 1)) // декабрь
 
   return (
-    <div className="absolute z-20 mt-2 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-4 w-[300px] max-w-[calc(100vw-2rem)]">
-      <div className="flex items-center justify-between mb-3">
+    <div className="glass-strong absolute right-0 z-20 mt-2 w-[300px] max-w-[calc(100vw-2rem)] animate-pop rounded-2xl border border-white/70 p-4 shadow-glass dark:border-white/10">
+      <div className="mb-3 flex items-center justify-between">
         <button
           onClick={() => canPrev && setViewMonth(subMonths(viewMonth, 1))}
           disabled={!canPrev}
-          className="p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
+          className="rounded-lg p-1.5 text-slate-700 transition-colors hover:bg-white/70 disabled:opacity-30 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           <ChevronLeft size={18} />
         </button>
@@ -37,7 +37,7 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
         <button
           onClick={() => canNext && setViewMonth(addMonths(viewMonth, 1))}
           disabled={!canNext}
-          className="p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
+          className="rounded-lg p-1.5 text-slate-700 transition-colors hover:bg-white/70 disabled:opacity-30 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           <ChevronRight size={18} />
         </button>
@@ -66,16 +66,16 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
                 onSelect(cell)
                 onClose()
               }}
-              className={`relative h-9 rounded-lg text-sm transition-colors flex items-center justify-center
+              className={`relative flex h-9 items-center justify-center rounded-lg text-sm transition-colors
                 ${!inRange
-                  ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed'
+                  ? 'cursor-not-allowed text-slate-200 dark:text-slate-700'
                   : isWeekend
-                    ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/20'
+                    ? 'bg-amber-50/80 text-amber-800 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20'
                     : sameMonth
-                      ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'}
-                ${active ? 'bg-indigo-600 text-white hover:bg-indigo-600 font-bold' : ''}
-                ${today && !active ? 'ring-2 ring-indigo-300 dark:ring-indigo-500' : ''}`}
+                      ? 'text-slate-700 hover:bg-violet-50/70 dark:text-slate-200 dark:hover:bg-slate-800'
+                      : 'text-slate-300 hover:bg-violet-50/70 dark:text-slate-600 dark:hover:bg-slate-800'}
+                ${active ? 'bg-brand-gradient font-bold text-white shadow-glow-sm hover:bg-brand-gradient' : ''}
+                ${today && !active ? 'ring-2 ring-violet-400/70 dark:ring-violet-500/60' : ''}`}
             >
               {format(cell, 'd')}
               {inRange && dotColor && (
