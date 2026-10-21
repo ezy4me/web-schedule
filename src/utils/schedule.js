@@ -313,41 +313,98 @@ export function buildEmptyDaySet(dates, group, data) {
   return set
 }
 
-// Статистика по парам: количество занятий по группам и оставшиеся (с сегодняшнего дня) пары
+// Статистика по парам: разрезы по группам/предметам/типам и оставшиеся (с текущего момента) пары
 export function buildLessonStats(data, from = new Date()) {
   const year = from.getFullYear()
   const today = startOfDay(from)
-  const groupMap = new Map()
+  const groupsMap = new Map()
+  const typesMap = new Map()
+  const subjectsMap = new Map()
   const remainingLessons = []
   let totalLessons = 0
   let remainingCount = 0
 
+  const groupsOf = (pair) =>
+    pair.groups && pair.groups.length
+      ? pair.groups
+      : String(pair.group || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+
+  // Пара ещё «осталась»: даты позже сегодняшней — всегда; сегодня — если конец пары позже «сейчас»
+  const isRemaining = (date, timeStr) => {
+    if (date > today) return true
+    if (date.getTime() !== today.getTime()) return false
+    const [h, m] = String(timeStr || '').split(':').map(Number)
+    if (Number.isNaN(h) || Number.isNaN(m)) return false
+    return today.getTime() + (h * 60 + m + LESSON_DURATION_MIN) * 60000 > from.getTime()
+  }
+
   for (const date of getSeasonDates(year)) {
     const pairs = getPairsForDate(date, 'all', {}, data)
     if (!pairs.length) continue
-    const isRemaining = date >= today
+
     for (const pair of pairs) {
       totalLessons++
-      if (isRemaining) remainingCount++
-      const groups =
-        pair.groups && pair.groups.length
-          ? pair.groups
-          : String(pair.group || '')
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
+      const groups = groupsOf(pair)
+      const remaining = isRemaining(date, pair.time)
+      if (remaining) remainingCount++
+
       for (const g of groups) {
-        if (!groupMap.has(g)) groupMap.set(g, { group: g, total: 0, remaining: 0 })
-        const stat = groupMap.get(g)
-        stat.total++
-        if (isRemaining) stat.remaining++
+        let gs = groupsMap.get(g)
+        if (!gs) {
+          gs = { total: 0, remaining: 0 }
+          groupsMap.set(g, gs)
+        }
+        gs.total++
+        if (remaining) gs.remaining++
       }
-      if (isRemaining) remainingLessons.push({ ...pair, date, groups })
+
+      const t = String(pair.type || '')
+      let ts = typesMap.get(t)
+      if (!ts) {
+        ts = { total: 0, remaining: 0 }
+        typesMap.set(t, ts)
+      }
+      ts.total++
+      if (remaining) ts.remaining++
+
+      const subject = String(pair.subject || '').trim()
+      let ss = subjectsMap.get(subject)
+      if (!ss) {
+        ss = { total: 0, remaining: 0, groups: new Set() }
+        subjectsMap.set(subject, ss)
+      }
+      for (const g of groups) ss.groups.add(g)
+      ss.total++
+      if (remaining) ss.remaining++
+
+      if (remaining) remainingLessons.push({ ...pair, date, groups })
     }
   }
 
+  const groups = [...groupsMap.entries()]
+    .map(([group, s]) => ({ group, total: s.total, remaining: s.remaining }))
+    .sort((a, b) => a.group.localeCompare(b.group, 'ru'))
+
+  const byType = [...typesMap.entries()]
+    .map(([type, s]) => ({ type, total: s.total, remaining: s.remaining }))
+    .sort((a, b) => a.type.localeCompare(b.type, 'ru'))
+
+  const bySubject = [...subjectsMap.entries()]
+    .map(([subject, s]) => ({
+      subject,
+      total: s.total,
+      remaining: s.remaining,
+      groups: [...s.groups].sort((a, b) => a.localeCompare(b, 'ru')),
+    }))
+    .sort((a, b) => a.subject.localeCompare(b.subject, 'ru'))
+
   return {
-    groups: [...groupMap.values()].sort((a, b) => a.group.localeCompare(b.group, 'ru')),
+    groups,
+    byType,
+    bySubject,
     remainingLessons,
     totalLessons,
     remainingCount,

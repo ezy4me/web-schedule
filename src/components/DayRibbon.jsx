@@ -66,7 +66,7 @@ export default function DayRibbon({ selected, onSelect, emptyDays }) {
               title={isWeekend ? 'Выходной — пар нет' : undefined}
               className={`flex w-12 shrink-0 snap-start flex-col items-center justify-center rounded-lg border py-2 transition-colors
                 ${active
-                  ? 'border-indigo-600 bg-indigo-600 text-white dark:border-indigo-500 dark:bg-indigo-500 dark:text-white'
+                  ? 'border-indigo-600 bg-indigo-600 text-white dark:border-indigo-500 dark:bg-indigo-500'
                   : isWeekend
                     ? 'border-amber-200/70 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-400/90 dark:hover:bg-amber-500/20'
                     : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800'}

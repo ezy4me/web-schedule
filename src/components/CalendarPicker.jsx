@@ -69,12 +69,13 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
               className={`relative flex h-9 items-center justify-center rounded-md text-sm transition-colors
                 ${!inRange
                   ? 'cursor-not-allowed text-zinc-200 dark:text-zinc-700'
-                  : isWeekend
-                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400/90 dark:hover:bg-amber-500/20'
-                    : sameMonth
-                      ? 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
-                      : 'text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'}
-                ${active ? 'bg-indigo-600 font-medium text-white hover:bg-indigo-600 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-500' : ''}
+                  : active
+                    ? 'bg-indigo-600 font-medium text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400'
+                    : isWeekend
+                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400/90 dark:hover:bg-amber-500/20'
+                      : sameMonth
+                        ? 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
+                        : 'text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'}
                 ${today && !active ? 'ring-1 ring-inset ring-zinc-400 dark:ring-zinc-500' : ''}`}
             >
               {format(cell, 'd')}

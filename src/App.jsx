@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon } from 'lucide-react'
+import { CalendarDays, CalendarRange, BarChart3, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon } from 'lucide-react'
 import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow, buildLessonStats } from './utils/schedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
@@ -161,7 +161,19 @@ export default function App() {
 
   const isTodaySelected = isSameDay(selected, now)
 
-  // Статистика по парам: занятия по группам и оставшиеся с сегодняшнего дня
+  // Страница: расписание или статистика (синхронизация с хешем #stats)
+  const [page, setPage] = useState(() => (window.location.hash === '#stats' ? 'stats' : 'schedule'))
+  const switchPage = (next) => {
+    setPage(next)
+    window.location.hash = next === 'stats' ? 'stats' : 'schedule'
+  }
+  useEffect(() => {
+    const onHashChange = () => setPage(window.location.hash === '#stats' ? 'stats' : 'schedule')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  // Статистика по парам: разрезы по группам/предметам/типам + оставшиеся пары
   const stats = useMemo(() => buildLessonStats(data), [data])
 
   const hasFilters = group !== 'all' || type !== 'all' || query.trim() !== ''
@@ -258,9 +270,11 @@ export default function App() {
                 <CalendarDays size={20} className="text-zinc-400" />
                 Учебное расписание
               </h1>
-              <p className="mt-1 truncate text-sm capitalize text-zinc-500 dark:text-zinc-400">
-                {format(selected, 'EEEE, d MMMM yyyy', { locale: ru })}
-              </p>
+              {page === 'schedule' && (
+                <p className="mt-1 truncate text-sm capitalize text-zinc-500 dark:text-zinc-400">
+                  {format(selected, 'EEEE, d MMMM yyyy', { locale: ru })}
+                </p>
+              )}
             </div>
             <button
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
@@ -278,6 +292,32 @@ export default function App() {
             {weekInfo.label}
           </div>
         </header>
+
+        {/* Переключение страниц: расписание / статистика */}
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-800/50">
+          <button
+            onClick={() => switchPage('schedule')}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              page === 'schedule'
+                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100'
+                : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+            }`}
+          >
+            <CalendarDays size={15} />
+            Расписание
+          </button>
+          <button
+            onClick={() => switchPage('stats')}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              page === 'stats'
+                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100'
+                : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+            }`}
+          >
+            <BarChart3 size={15} />
+            Статистика
+          </button>
+        </div>
 
         {/* Выбор расписания + загрузка JSON */}
         <div className="mb-4">
@@ -339,6 +379,8 @@ export default function App() {
           />
         </div>
 
+        {page === 'schedule' && (
+        <>
         {/* Быстрые кнопки + календарь */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <button
@@ -424,11 +466,14 @@ export default function App() {
             </div>
           )}
         </div>
+        </>
+        )}
 
-        {/* Статистика по парам */}
-        <div className="mt-6">
-          <Statistics stats={stats} group={group} />
-        </div>
+        {page === 'stats' && (
+          <div className="mt-5">
+            <Statistics stats={stats} group={group} />
+          </div>
+        )}
       </div>
     </div>
   )
