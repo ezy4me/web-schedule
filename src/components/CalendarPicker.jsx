@@ -74,7 +74,7 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
                     : sameMonth
                       ? 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
                       : 'text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'}
-                ${active ? 'bg-zinc-900 font-medium text-white hover:bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-100' : ''}
+                ${active ? 'bg-indigo-600 font-medium text-white hover:bg-indigo-600 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-500' : ''}
                 ${today && !active ? 'ring-1 ring-inset ring-zinc-400 dark:ring-zinc-500' : ''}`}
             >
               {format(cell, 'd')}

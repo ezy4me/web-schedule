@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { CalendarDays, CalendarRange, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon } from 'lucide-react'
-import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow } from './utils/schedule.js'
+import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow, buildLessonStats } from './utils/schedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
 import CalendarPicker from './components/CalendarPicker.jsx'
@@ -11,6 +11,7 @@ import LessonCard from './components/LessonCard.jsx'
 import WindowCard from './components/WindowCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import NiceSelect from './components/NiceSelect.jsx'
+import Statistics from './components/Statistics.jsx'
 import excel3Data from './data/excel-3.json'
 
 // Доступные источники расписания (JSON-файлы лежат в public/)
@@ -159,6 +160,9 @@ export default function App() {
   )
 
   const isTodaySelected = isSameDay(selected, now)
+
+  // Статистика по парам: занятия по группам и оставшиеся с сегодняшнего дня
+  const stats = useMemo(() => buildLessonStats(data), [data])
 
   const hasFilters = group !== 'all' || type !== 'all' || query.trim() !== ''
 
@@ -419,6 +423,11 @@ export default function App() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Статистика по парам */}
+        <div className="mt-6">
+          <Statistics stats={stats} group={group} />
         </div>
       </div>
     </div>

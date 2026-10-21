@@ -1,4 +1,4 @@
-import { parse, format, startOfWeek, differenceInCalendarWeeks, parseISO } from 'date-fns'
+import { parse, format, startOfWeek, differenceInCalendarWeeks, parseISO, startOfDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import {
   SEMESTER_START,
@@ -311,6 +311,47 @@ export function buildEmptyDaySet(dates, group, data) {
     if (getPairsForDate(d, group, {}, data).length === 0) set.add(d.toISOString())
   }
   return set
+}
+
+// Статистика по парам: количество занятий по группам и оставшиеся (с сегодняшнего дня) пары
+export function buildLessonStats(data, from = new Date()) {
+  const year = from.getFullYear()
+  const today = startOfDay(from)
+  const groupMap = new Map()
+  const remainingLessons = []
+  let totalLessons = 0
+  let remainingCount = 0
+
+  for (const date of getSeasonDates(year)) {
+    const pairs = getPairsForDate(date, 'all', {}, data)
+    if (!pairs.length) continue
+    const isRemaining = date >= today
+    for (const pair of pairs) {
+      totalLessons++
+      if (isRemaining) remainingCount++
+      const groups =
+        pair.groups && pair.groups.length
+          ? pair.groups
+          : String(pair.group || '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+      for (const g of groups) {
+        if (!groupMap.has(g)) groupMap.set(g, { group: g, total: 0, remaining: 0 })
+        const stat = groupMap.get(g)
+        stat.total++
+        if (isRemaining) stat.remaining++
+      }
+      if (isRemaining) remainingLessons.push({ ...pair, date, groups })
+    }
+  }
+
+  return {
+    groups: [...groupMap.values()].sort((a, b) => a.group.localeCompare(b.group, 'ru')),
+    remainingLessons,
+    totalLessons,
+    remainingCount,
+  }
 }
 
 // Формирование диапазона дат для навигации — с 1 сентября по 31 декабря.
