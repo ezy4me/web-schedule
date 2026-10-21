@@ -1,4 +1,4 @@
-import { parse, format, startOfWeek, differenceInCalendarWeeks, parseISO, startOfDay } from 'date-fns'
+import { parse, format, startOfWeek, differenceInCalendarWeeks, parseISO, startOfDay, addDays } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import {
   SEMESTER_START,
@@ -313,101 +313,349 @@ export function buildEmptyDaySet(dates, group, data) {
   return set
 }
 
-// Статистика по парам: разрезы по группам/предметам/типам и оставшиеся (с текущего момента) пары
-export function buildLessonStats(data, from = new Date()) {
-  const year = from.getFullYear()
-  const today = startOfDay(from)
-  const groupsMap = new Map()
-  const typesMap = new Map()
-  const subjectsMap = new Map()
-  const remainingLessons = []
-  let totalLessons = 0
-  let remainingCount = 0
+// Статистика: разбор групп, индекс занятий и агрегаты по периодам
+export const LESSON_HOURS = LESSON_DURATION_MIN / 60 // 1,5 ч на пару
 
-  const groupsOf = (pair) =>
-    pair.groups && pair.groups.length
-      ? pair.groups
-      : String(pair.group || '')
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
+export function splitGroups(value) {
+  if (Array.isArray(value)) return value.map((s) => String(s).trim()).filter(Boolean)
+  return String(value || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
 
-  // Пара ещё «осталась»: даты позже сегодняшней — всегда; сегодня — если конец пары позже «сейчас»
-  const isRemaining = (date, timeStr) => {
-    if (date > today) return true
-    if (date.getTime() !== today.getTime()) return false
-    const [h, m] = String(timeStr || '').split(':').map(Number)
-    if (Number.isNaN(h) || Number.isNaN(m)) return false
-    return today.getTime() + (h * 60 + m + LESSON_DURATION_MIN) * 60000 > from.getTime()
-  }
+// Пара ещё не прошла: даты позже сегодняшней — всегда; сегодня — если конец пары позже «сейчас»
+export function isLessonUpcoming(lesson, now = new Date()) {
+  const day = startOfDay(now)
+  if (lesson.date > day) return true
+  if (lesson.date.getTime() !== day.getTime()) return false
+  const [h, m] = String(lesson.time || '').split(':').map(Number)
+  if (Number.isNaN(h) || Number.isNaN(m)) return false
+  return day.getTime() + (h * 60 + m + LESSON_DURATION_MIN) * 60000 > now.getTime()
+}
 
+// Плоский список всех вхождений семестра (с объединением одинаковых пар по группам)
+export function buildLessonIndex(data, year = new Date().getFullYear()) {
+  const lessons = []
   for (const date of getSeasonDates(year)) {
-    const pairs = getPairsForDate(date, 'all', {}, data)
-    if (!pairs.length) continue
-
-    for (const pair of pairs) {
-      totalLessons++
-      const groups = groupsOf(pair)
-      const remaining = isRemaining(date, pair.time)
-      if (remaining) remainingCount++
-
-      for (const g of groups) {
-        let gs = groupsMap.get(g)
-        if (!gs) {
-          gs = { total: 0, remaining: 0 }
-          groupsMap.set(g, gs)
-        }
-        gs.total++
-        if (remaining) gs.remaining++
-      }
-
-      const t = String(pair.type || '')
-      let ts = typesMap.get(t)
-      if (!ts) {
-        ts = { total: 0, remaining: 0 }
-        typesMap.set(t, ts)
-      }
-      ts.total++
-      if (remaining) ts.remaining++
-
-      const subject = String(pair.subject || '').trim()
-      let ss = subjectsMap.get(subject)
-      if (!ss) {
-        ss = { total: 0, remaining: 0, groups: new Set() }
-        subjectsMap.set(subject, ss)
-      }
-      for (const g of groups) ss.groups.add(g)
-      ss.total++
-      if (remaining) ss.remaining++
-
-      if (remaining) remainingLessons.push({ ...pair, date, groups })
+    for (const pair of getPairsForDate(date, 'all', {}, data)) {
+      const groups = splitGroups(pair.groups && pair.groups.length ? pair.groups : pair.group)
+      if (!groups.length) continue
+      lessons.push({
+        date,
+        time: String(pair.time || ''),
+        subject: String(pair.subject || '').trim(),
+        type: String(pair.type || ''),
+        room: String(pair.room || '').trim(),
+        teacher: String(pair.teacher || '').trim(),
+        groups,
+        special: !!pair.special,
+        weekday: date.getDay() === 0 ? 7 : date.getDay(),
+        week: getWeekIndex(date),
+      })
     }
   }
+  return lessons.sort((a, b) => a.date - b.date || a.time.localeCompare(b.time))
+}
 
-  const groups = [...groupsMap.entries()]
-    .map(([group, s]) => ({ group, total: s.total, remaining: s.remaining }))
-    .sort((a, b) => a.group.localeCompare(b.group, 'ru'))
+// Базовые данные статистики: индекс занятий и список групп
+export function buildLessonStats(data, from = new Date()) {
+  const seasonYear = from.getFullYear()
+  const lessons = buildLessonIndex(data, seasonYear)
+  const groupSet = new Set()
+  for (const lesson of lessons) for (const g of lesson.groups) groupSet.add(g)
+  return {
+    seasonYear,
+    lessons,
+    groups: [...groupSet].sort((a, b) => a.localeCompare(b, 'ru')),
+  }
+}
 
-  const byType = [...typesMap.entries()]
-    .map(([type, s]) => ({ type, total: s.total, remaining: s.remaining }))
-    .sort((a, b) => a.type.localeCompare(b.type, 'ru'))
+function countWindows(lessons) {
+  const byDate = new Map()
+  for (const lesson of lessons) {
+    const key = lesson.date.toISOString()
+    if (!byDate.has(key)) byDate.set(key, new Set())
+    byDate.get(key).add(lesson.time)
+  }
+  let total = 0
+  for (const times of byDate.values()) {
+    const indices = [...times].map((t) => TIME_SLOTS.indexOf(t)).filter((i) => i >= 0)
+    if (indices.length < 2) continue
+    const first = Math.min(...indices)
+    const last = Math.max(...indices)
+    total += last - first + 1 - new Set(indices).size
+  }
+  return total
+}
 
-  const bySubject = [...subjectsMap.entries()]
-    .map(([subject, s]) => ({
-      subject,
+// Диапазон периода: 'semester' | 'remaining' | 'month-8'..'month-11'
+export function statsPeriodRange(period, year, now = new Date()) {
+  const seasonStart = parseDDMM(SEMESTER_START, year)
+  const seasonEnd = addDays(parseDDMM(SEMESTER_END, year), 1)
+  if (period === 'remaining') {
+    let from = startOfDay(now)
+    if (from < seasonStart) from = seasonStart
+    if (from > seasonEnd) from = seasonEnd
+    return { from, to: seasonEnd }
+  }
+  if (typeof period === 'string' && period.startsWith('month-')) {
+    const month = Number(period.slice(6))
+    return { from: new Date(year, month, 1), to: new Date(year, month + 1, 1) }
+  }
+  return { from: seasonStart, to: seasonEnd }
+}
+
+// Агрегация статистики по группе и периоду
+export function aggregateLessonStats(lessons, { group = 'all', period = 'semester', now = new Date() } = {}) {
+  const year = lessons.length ? lessons[0].date.getFullYear() : now.getFullYear()
+  const seasonStart = parseDDMM(SEMESTER_START, year)
+  const seasonEnd = addDays(parseDDMM(SEMESTER_END, year), 1)
+  const range = statsPeriodRange(period, year, now)
+
+  const inSeason = group === 'all' ? lessons : lessons.filter((l) => l.groups.includes(group))
+  const inRangeAll = inSeason.filter((l) => l.date >= range.from && l.date < range.to)
+  // «Остаток» — только ещё не прошедшие пары
+  const inRange = period === 'remaining' ? inRangeAll.filter((l) => isLessonUpcoming(l, now)) : inRangeAll
+  const remaining = inRange.filter((l) => isLessonUpcoming(l, now))
+
+  const groupStats = new Map()
+  const subjectStats = new Map()
+  const typeStats = new Map()
+  const roomStats = new Map()
+  const teacherStats = new Map()
+  const weekdayStats = Array.from({ length: 7 }, () => ({ total: 0, remaining: 0 }))
+  const timeStats = new Map()
+  const weekStats = new Map()
+  let groupAllocations = 0
+
+  const add = (map, key) => {
+    let stat = map.get(key)
+    if (!stat) {
+      stat = { total: 0, remaining: 0 }
+      map.set(key, stat)
+    }
+    return stat
+  }
+
+  for (const lesson of inRange) {
+    const isRemaining = isLessonUpcoming(lesson, now)
+    // При фильтре по группе совместные лекции не должны добавлять соседние группы
+    const allocatedGroups = group === 'all' ? lesson.groups : [group]
+
+    for (const g of allocatedGroups) {
+      const stat = add(groupStats, g)
+      stat.total++
+      if (isRemaining) stat.remaining++
+      groupAllocations++
+    }
+
+    const subject = lesson.subject || '—'
+    let ss = subjectStats.get(subject)
+    if (!ss) {
+      ss = { total: 0, remaining: 0, groups: new Set(), rooms: new Set(), teachers: new Set(), types: {} }
+      subjectStats.set(subject, ss)
+    }
+    ss.total++
+    if (isRemaining) ss.remaining++
+    for (const g of allocatedGroups) ss.groups.add(g)
+    if (lesson.room) ss.rooms.add(lesson.room)
+    if (lesson.teacher) ss.teachers.add(lesson.teacher)
+    ss.types[lesson.type] = (ss.types[lesson.type] || 0) + 1
+
+    const type = lesson.type || '—'
+    const ts = add(typeStats, type)
+    ts.total++
+    if (isRemaining) ts.remaining++
+
+    if (lesson.room) {
+      let rs = roomStats.get(lesson.room)
+      if (!rs) {
+        rs = { total: 0, remaining: 0, subjects: new Set() }
+        roomStats.set(lesson.room, rs)
+      }
+      rs.total++
+      if (isRemaining) rs.remaining++
+      rs.subjects.add(subject)
+    }
+
+    if (lesson.teacher) {
+      let tt = teacherStats.get(lesson.teacher)
+      if (!tt) {
+        tt = { total: 0, remaining: 0, subjects: new Set(), rooms: new Set() }
+        teacherStats.set(lesson.teacher, tt)
+      }
+      tt.total++
+      if (isRemaining) tt.remaining++
+      tt.subjects.add(subject)
+      if (lesson.room) tt.rooms.add(lesson.room)
+    }
+
+    const day = weekdayStats[lesson.weekday - 1]
+    day.total++
+    if (isRemaining) day.remaining++
+
+    const tm = add(timeStats, lesson.time)
+    tm.total++
+    if (isRemaining) tm.remaining++
+
+    let ws = weekStats.get(lesson.week)
+    if (!ws) {
+      ws = { total: 0, remaining: 0 }
+      weekStats.set(lesson.week, ws)
+    }
+    ws.total++
+    if (isRemaining) ws.remaining++
+  }
+
+  // Для календаря-хитмапа: весь семестр, не только выбранный период
+  const dateStats = new Map()
+  for (const lesson of inSeason) {
+    const dateKey = toDDMM(lesson.date)
+    let ds = dateStats.get(dateKey)
+    if (!ds) {
+      ds = { date: lesson.date, total: 0, remaining: 0 }
+      dateStats.set(dateKey, ds)
+    }
+    ds.total++
+    if (isLessonUpcoming(lesson, now)) ds.remaining++
+  }
+
+  const pairs = inRange.length
+  const hours = (n) => Math.round(n * LESSON_HOURS * 10) / 10
+  const share = (n, base) => (base ? Math.round((n / base) * 1000) / 10 : 0)
+
+  const byGroup = [...groupStats.entries()]
+    .map(([key, s]) => ({
+      key,
+      name: key,
       total: s.total,
       remaining: s.remaining,
-      groups: [...s.groups].sort((a, b) => a.localeCompare(b, 'ru')),
+      hours: hours(s.total),
+      share: share(s.total, groupAllocations),
     }))
-    .sort((a, b) => a.subject.localeCompare(b.subject, 'ru'))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+
+  const byType = [...typeStats.entries()]
+    .map(([key, s]) => ({
+      key,
+      name: key,
+      total: s.total,
+      remaining: s.remaining,
+      hours: hours(s.total),
+      share: share(s.total, pairs),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+
+  const bySubject = [...subjectStats.entries()]
+    .map(([key, s]) => ({
+      key,
+      name: key,
+      total: s.total,
+      remaining: s.remaining,
+      hours: hours(s.total),
+      share: share(s.total, pairs),
+      groups: [...s.groups].sort((a, b) => a.localeCompare(b, 'ru')),
+      rooms: [...s.rooms].sort((a, b) => a.localeCompare(b, 'ru')),
+      teachers: [...s.teachers].sort((a, b) => a.localeCompare(b, 'ru')),
+      types: s.types,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+
+  const byRoom = [...roomStats.entries()]
+    .map(([key, s]) => ({
+      key,
+      name: key,
+      total: s.total,
+      remaining: s.remaining,
+      hours: hours(s.total),
+      share: share(s.total, pairs),
+      subjects: [...s.subjects].sort((a, b) => a.localeCompare(b, 'ru')),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+
+  const byTeacher = [...teacherStats.entries()]
+    .map(([key, s]) => ({
+      key,
+      name: key,
+      total: s.total,
+      remaining: s.remaining,
+      hours: hours(s.total),
+      share: share(s.total, pairs),
+      subjects: [...s.subjects].sort((a, b) => a.localeCompare(b, 'ru')),
+      rooms: [...s.rooms].sort((a, b) => a.localeCompare(b, 'ru')),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+
+  const byWeekday = weekdayStats.map((s, i) => ({ weekday: i + 1, total: s.total, remaining: s.remaining }))
+
+  const times = [...TIME_SLOTS]
+  for (const time of timeStats.keys()) if (!times.includes(time)) times.push(time)
+  const byTime = times
+    .map((time) => {
+      const s = timeStats.get(time)
+      return { time, total: s ? s.total : 0, remaining: s ? s.remaining : 0 }
+    })
+    .filter((t) => t.total > 0)
+
+  const baseMonday = startOfWeek(seasonStart, { weekStartsOn: 1 })
+  const seasonLastWeek = getWeekIndex(addDays(seasonEnd, -1))
+  const firstWeek = Math.max(0, getWeekIndex(range.from))
+  const lastWeek = Math.min(seasonLastWeek, getWeekIndex(addDays(range.to, -1)))
+  const byWeek = []
+  for (let week = firstWeek; week <= lastWeek; week++) {
+    const monday = addDays(baseMonday, week * 7)
+    const s = weekStats.get(week)
+    byWeek.push({
+      week,
+      monday,
+      total: s ? s.total : 0,
+      remaining: s ? s.remaining : 0,
+      isCurrent: now >= monday && now < addDays(monday, 7),
+    })
+  }
+
+  const byDate = [...dateStats.values()].sort((a, b) => a.date - b.date)
+
+  const studyDays = new Set(inRange.map((l) => l.date.getTime())).size
+  const subjects = new Set(inRange.map((l) => l.subject).filter(Boolean))
+  const groups = new Set()
+  for (const lesson of inRange) {
+    for (const g of group === 'all' ? lesson.groups : [group]) groups.add(g)
+  }
+  const rooms = new Set(inRange.map((l) => l.room).filter(Boolean))
+  const teachers = new Set(inRange.map((l) => l.teacher).filter(Boolean))
+  const upcoming = inSeason
+    .filter((l) => isLessonUpcoming(l, now))
+    .sort((a, b) => a.date - b.date || a.time.localeCompare(b.time))
+  const weeksLeft = Math.max(0, Math.ceil((seasonEnd.getTime() - now.getTime()) / (7 * 86400000)))
 
   return {
-    groups,
+    range,
+    totals: {
+      pairs,
+      remaining: remaining.length,
+      hours: hours(pairs),
+      subjects: subjects.size,
+      groups: groups.size,
+      rooms: rooms.size,
+      teachers: teachers.size,
+      studyDays,
+      windows: group === 'all' ? 0 : countWindows(inRange),
+      weeksLeft,
+      nextLesson: upcoming[0] || null,
+    },
+    byGroup,
     byType,
     bySubject,
-    remainingLessons,
-    totalLessons,
-    remainingCount,
+    byRoom,
+    byTeacher,
+    byWeekday,
+    byTime,
+    byWeek,
+    byDate,
+    remainingLessons: remaining,
+    groupAllocations,
   }
 }
 

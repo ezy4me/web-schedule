@@ -185,6 +185,19 @@ export default function App() {
     setSelected(monday)
   }
 
+  // Переход из статистики в расписание на конкретную дату
+  const openDateInSchedule = (date) => {
+    setSelected(date)
+    setShowPicker(false)
+    switchPage('schedule')
+  }
+
+  // Быстрый переход к статистике конкретной группы (из карточки пары)
+  const openGroupStats = (value) => {
+    setGroup(value)
+    switchPage('stats')
+  }
+
   const handleQuick = (fn) => {
     fn()
     setShowPicker(false)
@@ -460,6 +473,7 @@ export default function App() {
                     key={`${item.lesson.time}-${item.lesson.subject}-${item.lesson.group}-${i}`}
                     lesson={item.lesson}
                     isNow={isTodaySelected && isLessonNow(item.lesson.time, now)}
+                    onGroupClick={openGroupStats}
                   />
                 )
               )}
@@ -471,7 +485,7 @@ export default function App() {
 
         {page === 'stats' && (
           <div className="mt-5">
-            <Statistics stats={stats} group={group} />
+            <Statistics stats={stats} group={group} onGroupChange={setGroup} onOpenDate={openDateInSchedule} />
           </div>
         )}
       </div>

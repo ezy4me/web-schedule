@@ -22,6 +22,10 @@ export const TYPE_STYLES = {
   },
 }
 
+export const TYPE_ORDER = ['лек', 'пр', 'л.р.']
+
+export const DAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
 export const WEEK_TYPE_INFO = {
   odd: {
     label: 'Нечётная неделя',

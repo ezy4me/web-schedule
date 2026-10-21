@@ -1,7 +1,7 @@
 import React from 'react'
 import { TYPE_STYLES } from '../constants.js'
 
-export default function LessonCard({ lesson, isNow }) {
+export default function LessonCard({ lesson, isNow, onGroupClick }) {
   const style = TYPE_STYLES[lesson.type] || { dot: 'bg-zinc-400', label: lesson.type }
   const groupList = lesson.groups && lesson.groups.length > 0 ? lesson.groups : lesson.group ? [lesson.group] : []
   const hasMeta = isNow || lesson.special || (lesson.notes && lesson.notes !== 'разовое')
@@ -32,12 +32,15 @@ export default function LessonCard({ lesson, isNow }) {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Группа</span>
             {groupList.map((g) => (
-              <span
+              <button
                 key={g}
-                className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-300"
+                type="button"
+                onClick={() => onGroupClick && onGroupClick(g)}
+                title={`Статистика группы ${g}`}
+                className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:border-indigo-500/40 dark:hover:text-indigo-300"
               >
                 {g}
-              </span>
+              </button>
             ))}
           </div>
         )}
