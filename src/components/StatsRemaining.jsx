@@ -4,7 +4,8 @@ import { ru } from 'date-fns/locale'
 import { ArrowUpRight, ChevronDown } from 'lucide-react'
 import { TYPE_STYLES } from '../constants.js'
 import { isLessonUpcoming } from '../utils/schedule.js'
-import { capitalizeFirst, hoursLabel, nextLessonHint, pairsLabel } from '../utils/statsFormat.js'
+import { LESSON_ACADEMIC_HOURS } from '../utils/stats.js'
+import { capitalizeFirst, academicHoursLabel, nextLessonHint, pairsLabel } from '../utils/statsFormat.js'
 
 export default function StatsRemaining({ stats, group, now, onOpenDate }) {
   const [collapsed, setCollapsed] = useState(() => new Set())
@@ -119,7 +120,7 @@ export default function StatsRemaining({ stats, group, now, onOpenDate }) {
                         </span>
                       )}
                       <span className="ml-auto shrink-0 text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500">
-                        {day.lessons.length} · {hoursLabel(day.lessons.length * 1.5)}
+                        {day.lessons.length} · {academicHoursLabel(day.lessons.length * LESSON_ACADEMIC_HOURS)}
                       </span>
                     </button>
 

@@ -4,7 +4,7 @@ import { ru } from 'date-fns/locale'
 import { ArrowUpRight } from 'lucide-react'
 import { DAY_LABELS, TYPE_ORDER } from '../constants.js'
 import { BarList, StatsCard, TypeSplit, WeeklyBars } from './StatsCharts.jsx'
-import { capitalizeFirst, hoursLabel, nextLessonHint, pairsLabel } from '../utils/statsFormat.js'
+import { academicHoursLabel, capitalizeFirst, nextLessonHint, pairsLabel } from '../utils/statsFormat.js'
 
 function StatBox({ value, label }) {
   return (
@@ -65,11 +65,49 @@ export default function StatsOverview({ view, group, now, onOpenDate }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <StatBox value={view.totals.pairs} label="Пар" />
-        <StatBox value={view.totals.remaining} label="Осталось" />
-        <StatBox value={hoursLabel(view.totals.hours)} label="Нагрузка" />
+        <StatBox value={view.totals.pairs} label={group === 'all' ? 'Пар (уникальных)' : 'Пар'} />
+        <StatBox value={view.totals.remaining} label="Осталось пар" />
+        <StatBox value={academicHoursLabel(view.totals.academicHours)} label="Ауд. нагрузка" />
         <StatBox value={view.totals.subjects} label="Предметов" />
       </div>
+
+      <div className="rounded-xl border border-zinc-200 bg-white px-3 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-baseline justify-between gap-2 text-xs">
+          <span className="font-medium text-zinc-700 dark:text-zinc-200">Прогресс семестра</span>
+          <span className="tabular-nums text-zinc-500 dark:text-zinc-400">{view.totals.progress}%</span>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div
+            className="h-full rounded-full bg-indigo-500"
+            style={{ width: `${Math.min(100, Math.max(0, view.totals.progress))}%` }}
+          />
+        </div>
+        <div className="mt-1.5 flex justify-between gap-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span>
+            Пройдено {view.totals.seasonPast} из {view.totals.seasonPairs} пар
+          </span>
+          <span>
+            Осталось {view.totals.seasonRemaining} пар · {academicHoursLabel(view.totals.seasonRemainingHours)}
+          </span>
+        </div>
+      </div>
+
+      {group === 'all' && view.totals.streamPairs > 0 && (
+        <div className="rounded-xl border border-zinc-200 bg-white px-3 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Потоковые лекции</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {view.totals.streamPairs} пар · {view.totals.streamGroupSlots} участий
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+            В общей нагрузке лекция считается один раз. В нагрузку каждой группы входит по 2 ак. ч.
+          </p>
+          <p className="mt-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            {academicHoursLabel(view.totals.streamSavedHours)} не дублируется
+          </p>
+        </div>
+      )}
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {view.totals.groups} групп · {view.totals.rooms} аудиторий · {view.totals.studyDays} учебных дней
         {view.totals.teachers > 0 ? ` · ${view.totals.teachers} преподавателей` : ''}

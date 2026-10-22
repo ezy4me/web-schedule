@@ -1,4 +1,4 @@
-import { LESSON_DURATION_MIN } from './schedule.js'
+import { LESSON_DURATION_MIN } from './stats.js'
 
 export function plural(n, one, few, many) {
   const abs = Math.abs(n) % 100
@@ -21,9 +21,9 @@ export function weeksLabel(n) {
   return `${n} ${plural(n, 'неделя', 'недели', 'недель')}`
 }
 
-export function hoursLabel(hours) {
+export function academicHoursLabel(hours) {
   const value = Number.isInteger(hours) ? String(hours) : String(hours).replace('.', ',')
-  return `${value} ч`
+  return `${value} ак. ч`
 }
 
 export function capitalizeFirst(value) {

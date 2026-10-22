@@ -173,8 +173,13 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  // Статистика по парам: разрезы по группам/предметам/типам + оставшиеся пары
-  const stats = useMemo(() => buildLessonStats(data), [data])
+  // Статистика по парам: разрезы по группам/предметам/типам + оставшиеся пары.
+  // Семестр берём из выбранной даты, чтобы статистика не уезжала в другой год.
+  const seasonYear = selected.getFullYear()
+  const stats = useMemo(
+    () => buildLessonStats(data, new Date(seasonYear, 0, 1)),
+    [data, seasonYear]
+  )
 
   const hasFilters = group !== 'all' || type !== 'all' || query.trim() !== ''
 

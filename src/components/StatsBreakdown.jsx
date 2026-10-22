@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ChevronDown, Search, Users } from 'lucide-react'
 import { TYPE_ORDER, TYPE_STYLES } from '../constants.js'
 import { StatsCard } from './StatsCharts.jsx'
-import { hoursLabel } from '../utils/statsFormat.js'
+import { academicHoursLabel } from '../utils/statsFormat.js'
 
 const DIMENSIONS = [
   { id: 'groups', label: 'Группы', head: 'Группа' },
@@ -91,7 +91,7 @@ export default function StatsBreakdown({ view, group, onGroupChange }) {
     { key: 'name', label: current.head, numeric: false },
     { key: 'total', label: 'Пар', numeric: true },
     { key: 'remaining', label: 'Осталось', numeric: true },
-    { key: 'hours', label: 'Часы', numeric: true, wideOnly: true },
+    { key: 'academicHours', label: current.id === 'groups' ? 'Ак. ч группы' : 'Ак. ч', numeric: true, wideOnly: true },
     { key: 'share', label: 'Доля', numeric: true, wideOnly: true },
   ]
 
@@ -228,7 +228,7 @@ export default function StatsBreakdown({ view, group, onGroupChange }) {
                       <td className="py-2 pl-2 text-right tabular-nums text-zinc-600 dark:text-zinc-300">{row.total}</td>
                       <td className="py-2 pl-2 text-right tabular-nums text-zinc-500 dark:text-zinc-400">{row.remaining}</td>
                       <td className="hidden py-2 pl-2 text-right tabular-nums text-zinc-500 dark:text-zinc-400 sm:table-cell">
-                        {hoursLabel(row.hours)}
+                        {academicHoursLabel(row.academicHours)}
                       </td>
                       <td className="hidden py-2 pl-2 text-right tabular-nums text-zinc-500 dark:text-zinc-400 sm:table-cell">
                         {String(row.share).replace('.', ',')}%
@@ -261,6 +261,19 @@ export default function StatsBreakdown({ view, group, onGroupChange }) {
                 )
               })}
             </tbody>
+            {current.id === 'groups' && (
+              <tfoot>
+                <tr className="border-t border-zinc-200 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
+                  <td className="py-2 pr-3">Итого по группам</td>
+                  <td className="py-2 pl-2 text-right tabular-nums">{view.totals.groupPairs}</td>
+                  <td className="py-2 pl-2 text-right tabular-nums">{view.totals.groupRemaining}</td>
+                  <td className="hidden py-2 pl-2 text-right tabular-nums sm:table-cell">
+                    {academicHoursLabel(view.totals.groupAcademicHours)}
+                  </td>
+                  <td className="hidden py-2 pl-2 text-right tabular-nums sm:table-cell">100%</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
 
@@ -270,7 +283,9 @@ export default function StatsBreakdown({ view, group, onGroupChange }) {
 
         {current.id === 'groups' && group === 'all' && view.groupAllocations > view.totals.pairs && (
           <p className="mt-3 text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
-            Сумма по группам ({view.groupAllocations}) больше числа занятий ({view.totals.pairs}): совместные лекции учитываются в каждой группе.
+            Сумма по группам: {view.totals.groupPairs} пар · {academicHoursLabel(view.totals.groupAcademicHours)}.
+            Это больше уникальной нагрузки ({view.totals.pairs} пар · {academicHoursLabel(view.totals.academicHours)}),
+            потому что потоковые лекции идут в нагрузку каждой группы, но в общем итоге считаются один раз.
           </p>
         )}
       </StatsCard>
