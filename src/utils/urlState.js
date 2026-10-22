@@ -32,7 +32,7 @@ export function buildHash({
   if (date) params.set('date', date)
   if (group && group !== 'all') params.set('group', group)
   if (teacher && teacher !== 'all') params.set('teacher', teacher)
-  if (source && source !== 'excel-3') params.set('source', source)
+  if (source && source !== 'maximov') params.set('source', source)
   if (page === 'stats') {
     if (tab !== 'overview') params.set('tab', tab)
     if (period !== 'semester') params.set('period', period)

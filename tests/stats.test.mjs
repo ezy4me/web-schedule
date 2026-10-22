@@ -17,7 +17,7 @@ const yearStart = new Date(2026, 0, 1)
 const readSource = (name) =>
   normalizeSchedule(JSON.parse(readFileSync(join(root, 'public', name), 'utf8')))
 
-const stats = buildLessonStats(readSource('excel-3.json'), yearStart)
+const stats = buildLessonStats(readSource('maximov.json'), yearStart)
 const semester = aggregateLessonStats(stats.lessons, { period: 'semester', now })
 
 const sum = (rows, key) => rows.reduce((total, row) => total + row[key], 0)
@@ -26,7 +26,7 @@ test('одна пара равна двум академическим часа�
   assert.equal(LESSON_ACADEMIC_HOURS, 2)
 })
 
-test('индекс занятий excel-3', () => {
+test('индекс занятий maximov', () => {
   assert.equal(stats.lessons.length, 332)
   assert.equal(stats.groups.length, 8)
   assert.equal(stats.teachers.length, 0)
@@ -106,12 +106,26 @@ test('окна считаются только для выбранной гру�
 })
 
 test('фильтр по преподавателю', () => {
-  const withTeachers = buildLessonStats(readSource('excel.json'), yearStart)
+  const withTeachers = buildLessonStats(
+    normalizeSchedule([
+      {
+        day: 'Понедельник',
+        time: '08:00',
+        dates: ['07.09'],
+        group: '4433',
+        type: 'пр',
+        subject: 'Тестовая дисциплина',
+        room: '7 / 101',
+        teacher: 'Тестовый П.П.',
+      },
+    ]),
+    yearStart
+  )
   assert.equal(withTeachers.teachers.length, 1)
   const teacher = withTeachers.teachers[0]
   const filtered = aggregateLessonStats(withTeachers.lessons, { teacher, now })
   assert.equal(filtered.totals.pairs, withTeachers.lessons.length)
-  const missing = aggregateLessonStats(withTeachers.lessons, { teacher: 'Нет такого', now })
+  const missing = aggregateLessonStats(withTeachers.lessons, { teacher: 'Другой П.П.', now })
   assert.equal(missing.totals.pairs, 0)
 })
 

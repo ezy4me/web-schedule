@@ -14,20 +14,17 @@ import WindowCard from './components/WindowCard.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import NiceSelect from './components/NiceSelect.jsx'
 import Statistics from './components/Statistics.jsx'
-import excel3Data from './data/excel-3.json'
+import maximovData from './data/maximov.json'
 
 // Доступные источники расписания (JSON-файлы лежат в public/)
 const SCHEDULE_SOURCES = [
-  { id: 'kai', label: 'КАИ (сайт)', url: `${import.meta.env.BASE_URL}kai.json` },
-  { id: 'excel', label: 'КАИ (Excel)', url: `${import.meta.env.BASE_URL}excel.json` },
-  { id: 'excel-new', label: 'КАИ (Excel, новый)', url: `${import.meta.env.BASE_URL}excel-new.json` },
-  { id: 'excel-2', label: 'КАИ (Excel 2.0)', url: `${import.meta.env.BASE_URL}excel-2.json` },
-  { id: 'excel-3', label: 'КАИ (Excel 3.0)', url: `${import.meta.env.BASE_URL}excel-3.json` },
-  { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
   { id: 'maximov', label: 'Максимов Р.С.', url: `${import.meta.env.BASE_URL}maximov.json` },
+  { id: 'shumilkin', label: 'Шумилкин А.О.', url: `${import.meta.env.BASE_URL}shumilkin.json` },
+  { id: 'gimadeev', label: 'Гимадеев И.Ф.', url: `${import.meta.env.BASE_URL}gimadeev.json` },
+  { id: 'valova', label: 'Валова П.А.', url: `${import.meta.env.BASE_URL}valova.json` },
 ]
 
-const DEFAULT_SOURCE_ID = 'excel-3'
+const DEFAULT_SOURCE_ID = 'maximov'
 const LS_GROUP_KEY = 'schedule.group'
 const LS_SOURCE_KEY = 'schedule.source'
 const LS_THEME_KEY = 'schedule.theme'
@@ -47,7 +44,7 @@ function getInitialTheme() {
 
 // Данные по умолчанию — Excel 3.0 (встроены в бандл для мгновенного старта)
 function getDefaultData() {
-  return normalizeSchedule(excel3Data)
+  return normalizeSchedule(maximovData)
 }
 
 // Всегда актуальная дата — навигация по году позволяет листать куда угодно
@@ -68,7 +65,7 @@ function getInitialSourceId() {
 function getInitialGroup() {
   try {
     const saved = localStorage.getItem(LS_GROUP_KEY)
-    const groups = normalizeSchedule(excel3Data).groups
+    const groups = normalizeSchedule(maximovData).groups
     if (saved && (saved === 'all' || groups.includes(saved))) return saved
   } catch {
     // localStorage недоступен — игнорируем
