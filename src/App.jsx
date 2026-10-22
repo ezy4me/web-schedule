@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { CalendarDays, CalendarRange, BarChart3, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon } from 'lucide-react'
+import { CalendarDays, CalendarRange, BarChart3, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon, Database } from 'lucide-react'
 import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow, buildLessonStats } from './utils/schedule.js'
+import { readUrlState, writeUrlState, parseUrlDate } from './utils/urlState.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
 import CalendarPicker from './components/CalendarPicker.jsx'
@@ -84,17 +85,28 @@ function hasScheduleData(normalized) {
 }
 
 export default function App() {
-  const [selected, setSelected] = useState(getDefaultDate)
+  const [initialUrl] = useState(() => readUrlState(window.location.hash))
+  const [selected, setSelected] = useState(() => parseUrlDate(initialUrl.date) || getDefaultDate())
   const [showPicker, setShowPicker] = useState(false)
-  const [group, setGroup] = useState(getInitialGroup)
+  const [showData, setShowData] = useState(false)
+  const [group, setGroup] = useState(() => initialUrl.group || getInitialGroup())
+  const [teacher, setTeacher] = useState(() => initialUrl.teacher || 'all')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
   const [data, setData] = useState(getDefaultData)
-  const [sourceId, setSourceId] = useState(getInitialSourceId)
+  const [sourceId, setSourceId] = useState(() => {
+    if (initialUrl.source && SCHEDULE_SOURCES.some((s) => s.id === initialUrl.source)) {
+      return initialUrl.source
+    }
+    return getInitialSourceId()
+  })
   const [loading, setLoading] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
   const [now, setNow] = useState(() => new Date())
+  const [statsTab, setStatsTab] = useState(initialUrl.tab)
+  const [statsPeriod, setStatsPeriod] = useState(initialUrl.period)
+  const [page, setPage] = useState(initialUrl.page)
   const fileInputRef = useRef(null)
 
   // Живые часы для подсветки идущей пары (обновление каждые 30 секунд)
@@ -145,8 +157,8 @@ export default function App() {
   const weekInfo = WEEK_TYPE_INFO[weekType]
 
   const pairs = useMemo(
-    () => getPairsForDate(selected, group, { type, query }, data),
-    [selected, group, type, query, data]
+    () => getPairsForDate(selected, group, { type, query, teacher }, data),
+    [selected, group, teacher, type, query, data]
   )
 
   const timeline = useMemo(() => buildTimeline(pairs), [pairs])
@@ -161,17 +173,8 @@ export default function App() {
 
   const isTodaySelected = isSameDay(selected, now)
 
-  // Страница: расписание или статистика (синхронизация с хешем #stats)
-  const [page, setPage] = useState(() => (window.location.hash === '#stats' ? 'stats' : 'schedule'))
-  const switchPage = (next) => {
-    setPage(next)
-    window.location.hash = next === 'stats' ? 'stats' : 'schedule'
-  }
-  useEffect(() => {
-    const onHashChange = () => setPage(window.location.hash === '#stats' ? 'stats' : 'schedule')
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  // Страница: расписание или статистика. Состояние синхронизируется с URL.
+  const switchPage = (next) => setPage(next)
 
   // Статистика по парам: разрезы по группам/предметам/типам + оставшиеся пары.
   // Семестр берём из выбранной даты, чтобы статистика не уезжала в другой год.
@@ -181,7 +184,41 @@ export default function App() {
     [data, seasonYear]
   )
 
-  const hasFilters = group !== 'all' || type !== 'all' || query.trim() !== ''
+  useEffect(() => {
+    writeUrlState({
+      page,
+      date: format(selected, 'yyyy-MM-dd'),
+      group,
+      teacher,
+      source: sourceId === 'custom' ? '' : sourceId,
+      tab: statsTab,
+      period: statsPeriod,
+    })
+  }, [page, selected, group, teacher, sourceId, statsTab, statsPeriod])
+
+  // Ссылка из URL может ссылаться на группу/преподавателя из другого файла.
+  useEffect(() => {
+    if (group !== 'all' && !data.groups.includes(group)) setGroup('all')
+    if (teacher !== 'all' && !stats.teachers.includes(teacher)) setTeacher('all')
+  }, [data.groups, stats.teachers, group, teacher])
+
+  // Если URL изменили вручную или вернулись назад — подхватываем состояние.
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = readUrlState(window.location.hash)
+      setPage(next.page)
+      const nextDate = parseUrlDate(next.date)
+      if (nextDate) setSelected(nextDate)
+      if (next.group) setGroup(next.group)
+      if (next.teacher) setTeacher(next.teacher)
+      setStatsTab(next.tab)
+      setStatsPeriod(next.period)
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const hasFilters = group !== 'all' || teacher !== 'all' || type !== 'all' || query.trim() !== ''
 
   const goToday = () => setSelected(getDefaultDate())
   const goTomorrow = () => setSelected(addDays(getDefaultDate(), 1))
@@ -200,6 +237,8 @@ export default function App() {
   // Быстрый переход к статистике конкретной группы (из карточки пары)
   const openGroupStats = (value) => {
     setGroup(value)
+    setTeacher('all')
+    setStatsTab('overview')
     switchPage('stats')
   }
 
@@ -212,6 +251,7 @@ export default function App() {
   function applyData(normalized, label, ok) {
     setData({ ...normalized, isCustom: true, sourceLabel: label })
     setGroup('all')
+    setTeacher('all')
     setType('all')
     setQuery('')
     setImportMsg(ok ? { ok: true, text: label } : { ok: false, text: label })
@@ -272,6 +312,7 @@ export default function App() {
     setSourceId(DEFAULT_SOURCE_ID)
     setData(getDefaultData())
     setGroup('all')
+    setTeacher('all')
     setType('all')
     setQuery('')
     setImportMsg(null)
@@ -294,14 +335,32 @@ export default function App() {
                 </p>
               )}
             </div>
-            <button
-              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-              aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-              title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-            >
-              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                onClick={() => setShowData((value) => !value)}
+                className={`relative grid h-9 w-9 place-items-center rounded-lg border transition-colors ${
+                  showData
+                    ? 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
+                }`}
+                aria-label="Данные расписания"
+                aria-expanded={showData}
+                title="Данные расписания"
+              >
+                <Database size={17} />
+                {sourceId !== DEFAULT_SOURCE_ID && (
+                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                )}
+              </button>
+              <button
+                onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+                className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+                title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+              >
+                {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+              </button>
+            </div>
           </div>
 
           {/* Индикатор недели */}
@@ -337,65 +396,83 @@ export default function App() {
           </button>
         </div>
 
-        {/* Выбор расписания + загрузка JSON */}
-        <div className="mb-4">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="w-full sm:w-64">
-              <NiceSelect
-                label="Расписание"
-                value={sourceId}
-                onChange={handleSourceChange}
-                options={SCHEDULE_SOURCES.map((s) => ({ value: s.id, label: s.label }))}
-                icon={CalendarHeart}
-                allLabel="Выберите расписание"
-              />
-            </div>
-            <button
-              onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-800"
-            >
-              <UploadCloud size={16} />
-              Свой JSON
-            </button>
-            {loading && (
-              <span className="inline-flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                <Loader2 size={16} className="animate-spin" />
-                Загрузка...
-              </span>
-            )}
-            {sourceId !== DEFAULT_SOURCE_ID && !loading && (
+        {showData && (
+          <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Данные расписания</h2>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  {loading ? 'Загрузка…' : data.sourceLabel || `${data.groups.length} групп`}
+                </p>
+              </div>
               <button
-                onClick={resetData}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                type="button"
+                onClick={() => setShowData(false)}
+                className="grid h-8 w-8 place-items-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label="Закрыть панель данных"
               >
-                <X size={15} />
-                Сбросить
+                <X size={16} />
               </button>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="w-full sm:w-64">
+                <NiceSelect
+                  label="Расписание"
+                  value={sourceId}
+                  onChange={handleSourceChange}
+                  options={SCHEDULE_SOURCES.map((s) => ({ value: s.id, label: s.label }))}
+                  icon={CalendarHeart}
+                  allLabel="Выберите расписание"
+                />
+              </div>
+              <button
+                onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                <UploadCloud size={16} />
+                Свой JSON
+              </button>
+              {loading && (
+                <span className="inline-flex items-center gap-2 pb-2.5 text-sm text-zinc-500 dark:text-zinc-400">
+                  <Loader2 size={16} className="animate-spin" />
+                  Загрузка...
+                </span>
+              )}
+              {sourceId !== DEFAULT_SOURCE_ID && !loading && (
+                <button
+                  onClick={resetData}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                >
+                  <X size={15} />
+                  Сбросить
+                </button>
+              )}
+            </div>
+
+            {data.isCustom && sourceId !== DEFAULT_SOURCE_ID && !importMsg && (
+              <div className="mt-2">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 size={13} />
+                  {data.sourceLabel || `Загружено (${data.groups.length} групп)`}
+                </span>
+              </div>
             )}
-          </div>
 
-          {data.isCustom && sourceId !== DEFAULT_SOURCE_ID && !importMsg && (
-            <div className="mt-2">
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 size={13} />
-                {data.sourceLabel || `Загружено (${data.groups.length} групп)`}
-              </span>
-            </div>
-          )}
-
-          {importMsg && (
-            <div className={`mt-2 rounded-lg border px-3 py-2 text-sm ${importMsg.ok ? 'border-emerald-200 text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-400' : 'border-rose-200 text-rose-600 dark:border-rose-500/30 dark:text-rose-400'}`}>
-              {importMsg.text}
-            </div>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFile}
-            className="hidden"
-          />
-        </div>
+            {importMsg && (
+              <div className={`mt-2 rounded-lg border px-3 py-2 text-sm ${importMsg.ok ? 'border-emerald-200 text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-400' : 'border-rose-200 text-rose-600 dark:border-rose-500/30 dark:text-rose-400'}`}>
+                {importMsg.text}
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleFile}
+              className="hidden"
+            />
+          </section>
+        )}
 
         {page === 'schedule' && (
         <>
@@ -453,6 +530,9 @@ export default function App() {
           <Filters
             group={group}
             onGroupChange={setGroup}
+            teacher={teacher}
+            onTeacherChange={setTeacher}
+            teachers={stats.teachers}
             type={type}
             onTypeChange={setType}
             query={query}
@@ -490,7 +570,18 @@ export default function App() {
 
         {page === 'stats' && (
           <div className="mt-5">
-            <Statistics stats={stats} group={group} onGroupChange={setGroup} onOpenDate={openDateInSchedule} />
+            <Statistics
+              stats={stats}
+              group={group}
+              teacher={teacher}
+              tab={statsTab}
+              period={statsPeriod}
+              onTabChange={setStatsTab}
+              onPeriodChange={setStatsPeriod}
+              onGroupChange={setGroup}
+              onTeacherChange={setTeacher}
+              onOpenDate={openDateInSchedule}
+            />
           </div>
         )}
       </div>

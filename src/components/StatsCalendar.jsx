@@ -18,7 +18,7 @@ function buildCells(year, month) {
   return cells
 }
 
-export default function StatsCalendar({ stats, group, period, onOpenDate }) {
+export default function StatsCalendar({ stats, group, teacher, period, onOpenDate }) {
   const year = stats.seasonYear
   const activeMonth = typeof period === 'string' && period.startsWith('month-') ? Number(period.slice(6)) : null
   const now = new Date()
@@ -27,11 +27,12 @@ export default function StatsCalendar({ stats, group, period, onOpenDate }) {
     const map = new Map()
     for (const lesson of stats.lessons) {
       if (group !== 'all' && !lesson.groups.includes(group)) continue
+      if (teacher !== 'all' && lesson.teacher !== teacher) continue
       const key = toDDMM(lesson.date)
       map.set(key, (map.get(key) || 0) + 1)
     }
     return map
-  }, [stats.lessons, group])
+  }, [stats.lessons, group, teacher])
 
   return (
     <div className="space-y-3">

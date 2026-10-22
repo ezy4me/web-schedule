@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { BarChart3, CalendarRange, Clock, Layers } from 'lucide-react'
+import { BarChart3, CalendarRange, Clock, Layers, Users } from 'lucide-react'
 import { aggregateLessonStats } from '../utils/schedule.js'
 import { capitalizeFirst } from '../utils/statsFormat.js'
 import StatsOverview from './StatsOverview.jsx'
 import StatsBreakdown from './StatsBreakdown.jsx'
 import StatsCalendar from './StatsCalendar.jsx'
 import StatsRemaining from './StatsRemaining.jsx'
+import NiceSelect from './NiceSelect.jsx'
 
 const TABS = [
   { id: 'overview', label: 'Обзор', icon: BarChart3 },
@@ -27,9 +28,18 @@ function chipClass(active) {
     : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800'
 }
 
-export default function Statistics({ stats, group, onGroupChange, onOpenDate }) {
-  const [tab, setTab] = useState('overview')
-  const [period, setPeriod] = useState('semester')
+export default function Statistics({
+  stats,
+  group,
+  teacher,
+  tab,
+  period,
+  onTabChange,
+  onPeriodChange,
+  onGroupChange,
+  onTeacherChange,
+  onOpenDate,
+}) {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -42,9 +52,14 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
   }, [stats])
 
   const view = useMemo(
-    () => aggregateLessonStats(stats.lessons, { group, period, now }),
-    [stats.lessons, group, period, now]
+    () => aggregateLessonStats(stats.lessons, { group, teacher, period, now }),
+    [stats.lessons, group, teacher, period, now]
   )
+
+  const teacherOptions = [
+    { value: 'all', label: 'Все преподаватели' },
+    ...stats.teachers.map((item) => ({ value: item, label: item })),
+  ]
 
   const periods = [
     ...BASE_PERIODS,
@@ -55,6 +70,7 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
   ]
 
   const showPeriod = tab === 'overview' || tab === 'breakdown'
+  const hasFilter = group !== 'all' || teacher !== 'all'
 
   return (
     <section className="space-y-4">
@@ -62,14 +78,18 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Сентябрь–декабрь {stats.seasonYear}
           {group !== 'all' ? ` · группа ${group}` : ''}
+          {teacher !== 'all' ? ` · ${teacher}` : ''}
         </p>
-        {group !== 'all' && onGroupChange && (
+        {hasFilter && (
           <button
             type="button"
-            onClick={() => onGroupChange('all')}
+            onClick={() => {
+              onGroupChange('all')
+              onTeacherChange('all')
+            }}
             className="text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
           >
-            Сбросить группу
+            Сбросить фильтры
           </button>
         )}
       </div>
@@ -99,6 +119,19 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
         </div>
       </div>
 
+      {stats.teachers.length > 0 && (
+        <div className="sm:max-w-xs">
+          <NiceSelect
+            label="Преподаватель"
+            value={teacher}
+            onChange={onTeacherChange}
+            options={teacherOptions}
+            icon={Users}
+            allLabel="Все преподаватели"
+          />
+        </div>
+      )}
+
       {showPeriod && (
         <div>
           <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
@@ -109,7 +142,7 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setPeriod(item.id)}
+                onClick={() => onPeriodChange(item.id)}
                 className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${chipClass(period === item.id)}`}
               >
                 {item.label}
@@ -127,7 +160,7 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
             <button
               key={item.id}
               type="button"
-              onClick={() => setTab(item.id)}
+              onClick={() => onTabChange(item.id)}
               className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-[11px] font-medium transition-colors sm:text-xs ${
                 active
                   ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100'
@@ -146,15 +179,33 @@ export default function Statistics({ stats, group, onGroupChange, onOpenDate }) 
       )}
 
       {tab === 'breakdown' && (
-        <StatsBreakdown view={view} group={group} onGroupChange={onGroupChange} />
+        <StatsBreakdown
+          view={view}
+          group={group}
+          teacher={teacher}
+          onGroupChange={onGroupChange}
+          onTeacherChange={onTeacherChange}
+        />
       )}
 
       {tab === 'calendar' && (
-        <StatsCalendar stats={stats} group={group} period={period} onOpenDate={onOpenDate} />
+        <StatsCalendar
+          stats={stats}
+          group={group}
+          teacher={teacher}
+          period={period}
+          onOpenDate={onOpenDate}
+        />
       )}
 
       {tab === 'remaining' && (
-        <StatsRemaining stats={stats} group={group} now={now} onOpenDate={onOpenDate} />
+        <StatsRemaining
+          stats={stats}
+          group={group}
+          teacher={teacher}
+          now={now}
+          onOpenDate={onOpenDate}
+        />
       )}
     </section>
   )

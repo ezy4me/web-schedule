@@ -7,11 +7,14 @@ import { isLessonUpcoming } from '../utils/schedule.js'
 import { LESSON_ACADEMIC_HOURS } from '../utils/stats.js'
 import { capitalizeFirst, academicHoursLabel, nextLessonHint, pairsLabel } from '../utils/statsFormat.js'
 
-export default function StatsRemaining({ stats, group, now, onOpenDate }) {
+export default function StatsRemaining({ stats, group, teacher, now, onOpenDate }) {
   const [collapsed, setCollapsed] = useState(() => new Set())
 
   const remaining = stats.lessons.filter(
-    (lesson) => (group === 'all' || lesson.groups.includes(group)) && isLessonUpcoming(lesson, now)
+    (lesson) =>
+      (group === 'all' || lesson.groups.includes(group)) &&
+      (teacher === 'all' || lesson.teacher === teacher) &&
+      isLessonUpcoming(lesson, now)
   )
 
   const months = []
@@ -47,7 +50,11 @@ export default function StatsRemaining({ stats, group, now, onOpenDate }) {
       <div className="rounded-xl border border-zinc-200 bg-white px-4 py-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Все пары прошли</p>
         <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-          {group === 'all' ? 'До конца семестра занятий больше нет' : `У группы ${group} занятий больше нет`}
+          {group !== 'all'
+            ? `У группы ${group} занятий больше нет`
+            : teacher !== 'all'
+              ? `У преподавателя ${teacher} занятий больше нет`
+              : 'До конца семестра занятий больше нет'}
         </p>
       </div>
     )

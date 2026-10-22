@@ -240,6 +240,9 @@ function applyFilters(pairs, group, filters) {
     // Показываем все группы — объединяем одинаковые пары в одну карточку
     out = mergeLectures(out)
   }
+  if (filters.teacher && filters.teacher !== 'all') {
+    out = out.filter((p) => p.teacher === filters.teacher)
+  }
   if (filters.type && filters.type !== 'all') {
     out = out.filter((p) => p.type === filters.type)
   }

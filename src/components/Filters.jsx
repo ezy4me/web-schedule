@@ -6,6 +6,9 @@ import NiceSelect from './NiceSelect.jsx'
 export default function Filters({
   group,
   onGroupChange,
+  teacher,
+  onTeacherChange,
+  teachers = [],
   type,
   onTypeChange,
   query,
@@ -20,6 +23,11 @@ export default function Filters({
   const typeOptions = [
     { value: 'all', label: 'Все типы', icon: <Layers size={16} /> },
     ...LESSON_TYPES.map((t) => ({ value: t, label: t })),
+  ]
+
+  const teacherOptions = [
+    { value: 'all', label: 'Все преподаватели', icon: <Users size={16} /> },
+    ...teachers.map((t) => ({ value: t, label: t })),
   ]
 
   return (
@@ -41,6 +49,17 @@ export default function Filters({
         icon={Tag}
         allLabel="Все типы"
       />
+
+      {teachers.length > 0 && (
+        <NiceSelect
+          label="Преподаватель"
+          value={teacher}
+          onChange={onTeacherChange}
+          options={teacherOptions}
+          icon={Users}
+          allLabel="Все преподаватели"
+        />
+      )}
 
       <div className="relative sm:col-span-2">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />

@@ -46,7 +46,7 @@ function detailsFor(dimension, row, view) {
   return []
 }
 
-export default function StatsBreakdown({ view, group, onGroupChange }) {
+export default function StatsBreakdown({ view, group, teacher, onGroupChange, onTeacherChange }) {
   const [dimension, setDimension] = useState('groups')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'total', dir: 'desc' })
@@ -122,6 +122,24 @@ export default function StatsBreakdown({ view, group, onGroupChange }) {
         </span>
       )
     }
+    if (current.id === 'teachers') {
+      const active = teacher === row.key
+      return (
+        <button
+          type="button"
+          onClick={() => onTeacherChange(active ? 'all' : row.key)}
+          title={active ? 'Показать всех преподавателей' : `Статистика преподавателя ${row.key}`}
+          className={`inline-flex max-w-[16rem] items-center gap-1.5 truncate text-left font-medium ${
+            active
+              ? 'text-indigo-600 dark:text-indigo-400'
+              : 'text-zinc-800 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400'
+          }`}
+        >
+          <Users size={13} className="shrink-0 text-zinc-400" />
+          <span className="truncate">{row.name}</span>
+        </button>
+      )
+    }
     if (current.id === 'subjects') {
       return (
         <span className="block min-w-0">
@@ -137,13 +155,20 @@ export default function StatsBreakdown({ view, group, onGroupChange }) {
 
   return (
     <div className="space-y-3">
-      {group !== 'all' && (
+      {(group !== 'all' || teacher !== 'all') && (
         <div className="flex items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 dark:border-indigo-500/30 dark:bg-indigo-500/10">
-          <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Статистика группы {group}</span>
+          <span className="min-w-0 truncate text-xs font-medium text-indigo-700 dark:text-indigo-300">
+            {group !== 'all' ? `Группа ${group}` : ''}
+            {group !== 'all' && teacher !== 'all' ? ' · ' : ''}
+            {teacher !== 'all' ? teacher : ''}
+          </span>
           <button
             type="button"
-            onClick={() => onGroupChange('all')}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+            onClick={() => {
+              onGroupChange('all')
+              onTeacherChange('all')
+            }}
+            className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             Сбросить
           </button>
