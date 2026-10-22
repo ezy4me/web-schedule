@@ -101,6 +101,7 @@ export default function App() {
     }
     return getInitialSourceId()
   })
+  const [loadedSourceId, setLoadedSourceId] = useState(DEFAULT_SOURCE_ID)
   const [loading, setLoading] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
@@ -151,7 +152,7 @@ export default function App() {
   useEffect(() => {
     if (sourceId === DEFAULT_SOURCE_ID) return
     const src = SCHEDULE_SOURCES.find((s) => s.id === sourceId)
-    if (src) loadUrl(src.url, src.label)
+    if (src) loadUrl(src.url, src.label, sourceId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -203,10 +204,12 @@ export default function App() {
   }, [page, selected, group, teacher, sourceId, statsTab, statsPeriod])
 
   // Ссылка из URL может ссылаться на группу/преподавателя из другого файла.
+  // Проверяем только после загрузки нужного источника, иначе сбросим фильтр раньше времени.
   useEffect(() => {
+    if (loadedSourceId !== sourceId) return
     if (group !== 'all' && !data.groups.includes(group)) setGroup('all')
     if (teacher !== 'all' && !stats.teachers.includes(teacher)) setTeacher('all')
-  }, [data.groups, stats.teachers, group, teacher])
+  }, [loadedSourceId, sourceId, data.groups, stats.teachers, group, teacher])
 
   // Если URL изменили вручную или вернулись назад — подхватываем состояние.
   useEffect(() => {
@@ -276,18 +279,15 @@ export default function App() {
   }
 
   // Применение нормализованных данных
-  function applyData(normalized, label, ok) {
+  function applyData(normalized, label, ok, sourceKey = DEFAULT_SOURCE_ID) {
     setData({ ...normalized, isCustom: true, sourceLabel: label })
-    setGroup('all')
-    setTeacher('all')
-    setType('all')
-    setQuery('')
+    setLoadedSourceId(sourceKey)
     setImportMsg(ok ? { ok: true, text: label } : { ok: false, text: label })
     setTimeout(() => setImportMsg(null), 4000)
   }
 
   // Загрузка расписания по URL (JSON-файл из public/)
-  async function loadUrl(url, label) {
+  async function loadUrl(url, label, sourceKey) {
     setLoading(true)
     setImportMsg(null)
     try {
@@ -296,7 +296,7 @@ export default function App() {
       const parsed = await res.json()
       const normalized = normalizeSchedule(parsed)
       if (!hasScheduleData(normalized)) throw new Error('Файл не содержит данных расписания')
-      applyData(normalized, `Загружено: ${label} (${normalized.groups.length} групп)`, true)
+      applyData(normalized, `Загружено: ${label} (${normalized.groups.length} групп)`, true, sourceKey)
     } catch (err) {
       setSourceId(DEFAULT_SOURCE_ID)
       applyData(getDefaultData(), `Не удалось загрузить ${label} (${err.message}). Показано КАИ (Excel 3.0).`, false)
@@ -308,9 +308,13 @@ export default function App() {
   // Смена источника расписания
   function handleSourceChange(id) {
     setSourceId(id)
+    setGroup('all')
+    setTeacher('all')
+    setType('all')
+    setQuery('')
     const src = SCHEDULE_SOURCES.find((s) => s.id === id)
     if (!src) return
-    loadUrl(src.url, src.label)
+    loadUrl(src.url, src.label, id)
   }
 
   // Загрузка JSON-файла с расписанием (локальный файл)
@@ -327,7 +331,11 @@ export default function App() {
           throw new Error('Файл не содержит данных расписания')
         }
         setSourceId('custom')
-        applyData(normalized, `Расписание загружено (${file.name}) · ${normalized.groups.length} групп`, true)
+        setGroup('all')
+        setTeacher('all')
+        setType('all')
+        setQuery('')
+        applyData(normalized, `Расписание загружено (${file.name}) · ${normalized.groups.length} групп`, true, 'custom')
       } catch (err) {
         setImportMsg({ ok: false, text: `Ошибка: ${err.message}` })
         setTimeout(() => setImportMsg(null), 5000)
@@ -338,6 +346,7 @@ export default function App() {
 
   function resetData() {
     setSourceId(DEFAULT_SOURCE_ID)
+    setLoadedSourceId(DEFAULT_SOURCE_ID)
     setData(getDefaultData())
     setGroup('all')
     setTeacher('all')
