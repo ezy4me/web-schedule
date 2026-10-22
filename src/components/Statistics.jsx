@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { BarChart3, CalendarRange, Clock, Layers, Users } from 'lucide-react'
+import { BarChart3, CalendarRange, Clock, Download, Layers, Users } from 'lucide-react'
 import { aggregateLessonStats } from '../utils/schedule.js'
+import { buildICS, downloadICS } from '../utils/ics.js'
 import { capitalizeFirst } from '../utils/statsFormat.js'
 import StatsOverview from './StatsOverview.jsx'
 import StatsBreakdown from './StatsBreakdown.jsx'
@@ -61,6 +62,29 @@ export default function Statistics({
     ...stats.teachers.map((item) => ({ value: item, label: item })),
   ]
 
+  const exportLessons = useMemo(
+    () =>
+      stats.lessons.filter(
+        (lesson) =>
+          (group === 'all' || lesson.groups.includes(group)) &&
+          (teacher === 'all' || lesson.teacher === teacher)
+      ),
+    [stats.lessons, group, teacher]
+  )
+
+  const exportCalendar = () => {
+    if (!exportLessons.length) return
+    const parts = [
+      group !== 'all' ? `группа ${group}` : '',
+      teacher !== 'all' ? teacher : '',
+    ].filter(Boolean)
+    const calendarName = `Расписание${parts.length ? ` — ${parts.join(', ')}` : ''}`
+    const filename = `schedule-${(group !== 'all' ? group : teacher !== 'all' ? teacher : 'semester')
+      .replace(/[^\wа-яё-]+/gi, '-')
+      .toLowerCase()}.ics`
+    downloadICS(filename, buildICS(exportLessons, { calendarName }))
+  }
+
   const periods = [
     ...BASE_PERIODS,
     ...[8, 9, 10, 11].map((month) => ({
@@ -80,18 +104,31 @@ export default function Statistics({
           {group !== 'all' ? ` · группа ${group}` : ''}
           {teacher !== 'all' ? ` · ${teacher}` : ''}
         </p>
-        {hasFilter && (
+        <div className="flex shrink-0 items-center gap-3">
+          {hasFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                onGroupChange('all')
+                onTeacherChange('all')
+              }}
+              className="text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+            >
+              Сбросить
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => {
-              onGroupChange('all')
-              onTeacherChange('all')
-            }}
-            className="text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+            onClick={exportCalendar}
+            disabled={!exportLessons.length}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:text-zinc-200"
+            title="Скачать текущую выборку в формате календаря"
           >
-            Сбросить фильтры
+            <Download size={13} />
+            <span className="hidden sm:inline">Экспорт .ics</span>
+            <span className="sm:hidden">.ics</span>
           </button>
-        )}
+        </div>
       </div>
 
       <div>

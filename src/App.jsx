@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { CalendarDays, CalendarRange, BarChart3, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon, Database } from 'lucide-react'
+import { CalendarDays, CalendarRange, BarChart3, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon, Database, Share2, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow, buildLessonStats } from './utils/schedule.js'
 import { readUrlState, writeUrlState, parseUrlDate } from './utils/urlState.js'
+import { validateSchedule } from './utils/validateSchedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
 import DayRibbon from './components/DayRibbon.jsx'
 import CalendarPicker from './components/CalendarPicker.jsx'
@@ -107,6 +108,7 @@ export default function App() {
   const [statsTab, setStatsTab] = useState(initialUrl.tab)
   const [statsPeriod, setStatsPeriod] = useState(initialUrl.period)
   const [page, setPage] = useState(initialUrl.page)
+  const [toast, setToast] = useState(null)
   const fileInputRef = useRef(null)
 
   // Живые часы для подсветки идущей пары (обновление каждые 30 секунд)
@@ -183,6 +185,10 @@ export default function App() {
     () => buildLessonStats(data, new Date(seasonYear, 0, 1)),
     [data, seasonYear]
   )
+  const health = useMemo(
+    () => validateSchedule(stats.lessons, data.groups),
+    [stats.lessons, data.groups]
+  )
 
   useEffect(() => {
     writeUrlState({
@@ -245,6 +251,28 @@ export default function App() {
   const handleQuick = (fn) => {
     fn()
     setShowPicker(false)
+  }
+
+  const copyShareLink = async () => {
+    const url = window.location.href
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+      } else {
+        const area = document.createElement('textarea')
+        area.value = url
+        area.style.position = 'fixed'
+        area.style.opacity = '0'
+        document.body.appendChild(area)
+        area.select()
+        document.execCommand('copy')
+        area.remove()
+      }
+      setToast('Ссылка скопирована')
+    } catch {
+      setToast('Не удалось скопировать ссылку')
+    }
+    setTimeout(() => setToast(null), 2500)
   }
 
   // Применение нормализованных данных
@@ -351,6 +379,14 @@ export default function App() {
                 {sourceId !== DEFAULT_SOURCE_ID && (
                   <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-indigo-500" />
                 )}
+              </button>
+              <button
+                onClick={copyShareLink}
+                className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label="Скопировать ссылку на расписание"
+                title="Скопировать ссылку"
+              >
+                <Share2 size={17} />
               </button>
               <button
                 onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
@@ -464,6 +500,41 @@ export default function App() {
                 {importMsg.text}
               </div>
             )}
+
+            <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+              <div className="flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                {health.status === 'ok' ? (
+                  <ShieldCheck size={14} className="text-emerald-500" />
+                ) : (
+                  <AlertTriangle size={14} className={health.status === 'error' ? 'text-rose-500' : 'text-amber-500'} />
+                )}
+                Проверка данных
+                <span className="font-normal text-zinc-400 dark:text-zinc-500">
+                  {health.checked} занятий
+                </span>
+              </div>
+              {health.status === 'ok' ? (
+                <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                  Ошибок и конфликтов не найдено.
+                </p>
+              ) : (
+                <ul className="mt-1.5 space-y-1">
+                  {health.issues.map((issue) => (
+                    <li key={issue.id} className="flex gap-2 text-xs">
+                      <span
+                        className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
+                          issue.level === 'error' ? 'bg-rose-500' : 'bg-amber-500'
+                        }`}
+                      />
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        <span className="font-medium text-zinc-700 dark:text-zinc-200">{issue.title}.</span>{' '}
+                        {issue.detail}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -585,6 +656,16 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
