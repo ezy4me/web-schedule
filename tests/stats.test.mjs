@@ -213,6 +213,34 @@ test('весенний семестр: индекс занятий shumilkin', (
   )
 })
 
+test('весенний семестр: индекс занятий gimadeev', () => {
+  const gimadeev = buildLessonStats(readSource('gimadeev.json'), springYearStart, 'spring')
+  assert.equal(gimadeev.lessons.length, 312)
+  assert.equal(gimadeev.groups.length, 11)
+  assert.deepEqual(gimadeev.groups, [
+    '4231',
+    '4234',
+    '4236',
+    '4332',
+    '4333',
+    '4335',
+    '4337',
+    '4433',
+    '4435',
+    '4437',
+    '4438',
+  ])
+  assert.equal(
+    aggregateLessonStats(gimadeev.lessons, {
+      period: 'semester',
+      now: springNow,
+      semester: 'spring',
+      year: 2027,
+    }).totals.groupPairs,
+    402
+  )
+})
+
 test('весенний семестр: нагрузка по месяцам', () => {
   const months = [0, 1, 2, 3, 4, 5].map(
     (month) =>
