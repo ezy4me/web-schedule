@@ -75,6 +75,23 @@ npm run preview    # предпросмотр собранного прилож�
 
 Дизайн намеренно спокойный: тёплая бумажная основа (stone/paper), чернильный текст, один акцент — глина (clay). Никаких сине-фиолетовых градиентов, свечения и стеклянных панелей. Графики используют приглушённую «типографскую» палитру (`CHART_COLORS` в `src/components/Charts.jsx`), цвета видов занятий заданы в `src/constants.js`.
 
+## PWA: иконки и экраны загрузки
+
+Иконки, favicon и iOS-splash генерируются одним скриптом:
+
+```bash
+npm run icons        # python scripts/generate-pwa-assets.py
+```
+
+Что создаётся в `public/`:
+
+- `pwa-192x192.png`, `pwa-512x512.png` — обычные иконки манифеста;
+- `pwa-maskable-512.png` — maskable-иконка (логотип в безопасной зоне 80 %);
+- `apple-touch-icon.png` (180), `favicon.ico` (16/32/48/64), `favicon.png`, `favicon.svg`;
+- `splash-<ширина>x<высота>.png` и `splash-dark-*` — стартовые экраны iOS для телефонов и iPad (подключаются через `apple-touch-startup-image` с media-запросами в `index.html`).
+
+Загрузочный экран на время старта бандла лежит прямо в `index.html` (инлайн-стили и SVG, работает без CSS/JS-бандла) — React заменяет его содержимым `#root`. iOS-splash в service worker не кэшируется (`globIgnores` в `vite.config.js`), android-схема собирается из манифеста автоматически.
+
 ## Готовые файлы расписания
 
 В папке `public/` лежат расписания, которые можно выбрать в интерфейсе:

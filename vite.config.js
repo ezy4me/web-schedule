@@ -7,7 +7,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        'favicon.ico',
+        'favicon.svg',
+        'favicon.png',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'pwa-maskable-512.png'
+      ],
       manifest: {
         name: 'Учебное расписание',
         short_name: 'Расписание',
@@ -33,7 +41,7 @@ export default defineConfig({
             purpose: 'any'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -42,6 +50,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
+        // Splash-экраны iOS запрашиваются системой, в precache им не место
+        globIgnores: ['**/splash-*.png'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
