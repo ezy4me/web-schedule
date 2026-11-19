@@ -3,7 +3,7 @@ import { addDays, format, isSameDay, isToday, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { DAY_LABELS, TYPE_STYLES } from '../constants.js'
-import { getPairsForDate, parseRoom } from '../utils/schedule.js'
+import { buildTimeline, getPairsForDate, parseRoom } from '../utils/schedule.js'
 
 const ACCENTS = {
   лек: 'bg-clay-600 dark:bg-clay-400',
@@ -17,6 +17,12 @@ function typeLabel(type) {
 
 function typeAccent(type) {
   return ACCENTS[type] || 'bg-stone-400'
+}
+
+function windowsLabel(count) {
+  if (count === 1) return 'окно'
+  if (count >= 2 && count < 5) return 'окна'
+  return 'окон'
 }
 
 // Неделя целиком: 6 дней (пн–сб) в колонках, компактные карточки пар.
@@ -39,11 +45,14 @@ export default function WeekView({
     return Array.from({ length: 6 }, (_, index) => {
       const date = addDays(weekStart, index)
       const pairs = getPairsForDate(date, group, { type, query, teacher }, data)
-      return { date, pairs }
+      const timeline = buildTimeline(pairs)
+      const windows = timeline.filter((item) => item.type === 'window')
+      return { date, pairs, timeline, windows }
     })
   }, [weekStart, group, teacher, type, query, data])
 
   const totalPairs = days.reduce((sum, day) => sum + day.pairs.length, 0)
+  const totalWindows = days.reduce((sum, day) => sum + day.windows.length, 0)
   const busiest = days.reduce(
     (best, day) => (day.pairs.length > best.pairs.length ? day : best),
     days[0]
@@ -64,6 +73,7 @@ export default function WeekView({
           </h2>
           <p className="mt-0.5 text-xs text-ink-muted dark:text-stone-400">
             {totalPairs} пар
+            {totalWindows > 0 ? ` · ${totalWindows} ${windowsLabel(totalWindows)}` : ''}
             {busiest.pairs.length > 0
               ? ` · самый плотный — ${DAY_LABELS[busiest.date.getDay() === 0 ? 6 : busiest.date.getDay() - 1]} (${busiest.pairs.length})`
               : ''}
@@ -97,7 +107,7 @@ export default function WeekView({
       </div>
 
       <div className="-mx-1 mt-3 flex snap-x gap-2 overflow-x-auto px-1 pb-2 scrollbar-thin">
-        {days.map(({ date, pairs }, index) => {
+        {days.map(({ date, pairs, timeline }, index) => {
           const active = isSameDay(date, selected)
           const today = isToday(date)
           return (
@@ -135,32 +145,47 @@ export default function WeekView({
                     нет пар
                   </span>
                 )}
-                {pairs.map((lesson, lessonIndex) => (
-                  <button
-                    key={`${lesson.time}-${lesson.subject}-${lessonIndex}`}
-                    type="button"
-                    onClick={() => onSelectDate(date)}
-                    title={`${lesson.subject} · ${typeLabel(lesson.type)}`}
-                    className="group flex w-full items-start gap-1.5 rounded-md border border-stone-200 bg-white p-1.5 text-left transition-colors hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
-                  >
-                    <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${typeAccent(lesson.type)}`} />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline justify-between gap-1">
-                        <span className="text-[11px] font-semibold tabular-nums text-ink-soft dark:text-stone-200">
-                          {lesson.time}
-                        </span>
-                        {parseRoom(lesson.room).room && (
-                          <span className="truncate text-[10px] tabular-nums text-ink-faint dark:text-stone-500">
-                            {parseRoom(lesson.room).room}
+                {timeline.map((item, itemIndex) => {
+                  if (item.type === 'window') {
+                    return (
+                      <div
+                        key={`window-${item.time}`}
+                        title={`Окно · ${item.time}`}
+                        className="flex items-center justify-between gap-1 rounded-md border border-dashed border-stone-300 px-1.5 py-1 text-[10px] text-ink-faint dark:border-stone-700 dark:text-stone-500"
+                      >
+                        <span className="tabular-nums">{item.time}</span>
+                        <span>окно</span>
+                      </div>
+                    )
+                  }
+                  const lesson = item.lesson
+                  return (
+                    <button
+                      key={`${lesson.time}-${lesson.subject}-${itemIndex}`}
+                      type="button"
+                      onClick={() => onSelectDate(date)}
+                      title={`${lesson.subject} · ${typeLabel(lesson.type)}`}
+                      className="group flex w-full items-start gap-1.5 rounded-md border border-stone-200 bg-white p-1.5 text-left transition-colors hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
+                    >
+                      <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${typeAccent(lesson.type)}`} />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-baseline justify-between gap-1">
+                          <span className="text-[11px] font-semibold tabular-nums text-ink-soft dark:text-stone-200">
+                            {lesson.time}
                           </span>
-                        )}
+                          {parseRoom(lesson.room).room && (
+                            <span className="truncate text-[10px] tabular-nums text-ink-faint dark:text-stone-500">
+                              {parseRoom(lesson.room).room}
+                            </span>
+                          )}
+                        </span>
+                        <span className="mt-0.5 line-clamp-2 block text-[11px] leading-snug text-ink-muted dark:text-stone-300">
+                          {lesson.subject}
+                        </span>
                       </span>
-                      <span className="mt-0.5 line-clamp-2 block text-[11px] leading-snug text-ink-muted dark:text-stone-300">
-                        {lesson.subject}
-                      </span>
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )
