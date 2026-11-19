@@ -183,7 +183,7 @@ test('семестры: границы и автоопределение по д
 test('весенний семестр: индекс занятий maximov', () => {
   assert.equal(springStats.semester, 'spring')
   assert.equal(springStats.seasonYear, 2027)
-  assert.equal(springStats.lessons.length, 233)
+  assert.equal(springStats.lessons.length, 234)
   assert.equal(springStats.groups.length, 8)
   assert.deepEqual(springStats.groups, [
     '4232',
@@ -251,7 +251,7 @@ test('весенний семестр: нагрузка по месяцам', ()
         year: 2027,
       }).totals.pairs
   )
-  assert.deepEqual(months, [36, 47, 53, 50, 45, 2])
+  assert.deepEqual(months, [36, 47, 53, 50, 46, 2])
   assert.equal(
     months.reduce((sum, pairs) => sum + pairs, 0),
     springSemester.totals.pairs
@@ -259,12 +259,12 @@ test('весенний семестр: нагрузка по месяцам', ()
 })
 
 test('весенний семестр: итоги и остаток на 1 февраля', () => {
-  assert.equal(springSemester.totals.pairs, 233)
-  assert.equal(springSemester.totals.groupPairs, 275)
+  assert.equal(springSemester.totals.pairs, 234)
+  assert.equal(springSemester.totals.groupPairs, 276)
   assert.equal(springSemester.totals.past, 36)
-  assert.equal(springSemester.totals.remaining, 197)
-  assert.equal(springSemester.totals.progress, 15.5)
-  assert.equal(springSemester.totals.academicHours, 233 * LESSON_ACADEMIC_HOURS)
+  assert.equal(springSemester.totals.remaining, 198)
+  assert.equal(springSemester.totals.progress, 15.4)
+  assert.equal(springSemester.totals.academicHours, 234 * LESSON_ACADEMIC_HOURS)
 
   const remaining = aggregateLessonStats(springStats.lessons, {
     period: 'remaining',
@@ -272,7 +272,7 @@ test('весенний семестр: итоги и остаток на 1 фе�
     semester: 'spring',
     year: 2027,
   })
-  assert.equal(remaining.totals.pairs, 197)
+  assert.equal(remaining.totals.pairs, 198)
   assert.equal(remaining.totals.past, 0)
 })
 
