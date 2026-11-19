@@ -2,10 +2,8 @@ import React, { useMemo } from 'react'
 import { format, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { DAY_LABELS } from '../constants.js'
-import { toDDMM } from '../utils/schedule.js'
+import { getSemesterInfo, toDDMM } from '../utils/schedule.js'
 import { capitalizeFirst, pairsLabel } from '../utils/statsFormat.js'
-
-const MONTHS = [8, 9, 10, 11]
 
 function buildCells(year, month) {
   const cells = []
@@ -20,6 +18,8 @@ function buildCells(year, month) {
 
 export default function StatsCalendar({ stats, group, teacher, period, onOpenDate }) {
   const year = stats.seasonYear
+  const semesterInfo = getSemesterInfo(stats.semester)
+  const months = semesterInfo.months
   const activeMonth = typeof period === 'string' && period.startsWith('month-') ? Number(period.slice(6)) : null
   const now = new Date()
 
@@ -41,7 +41,7 @@ export default function StatsCalendar({ stats, group, teacher, period, onOpenDat
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {MONTHS.map((month) => {
+        {months.map((month) => {
           const cells = buildCells(year, month)
           const monthDate = new Date(year, month, 1)
           let monthPairs = 0

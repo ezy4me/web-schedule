@@ -1,8 +1,6 @@
 import { parse, format, startOfWeek, differenceInCalendarWeeks, parseISO, startOfDay, addDays } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import {
-  SEMESTER_START,
-  SEMESTER_END,
   SCHEDULE,
   SPECIAL_PAIRS,
   SINGLE_EVENT_DATES,
@@ -14,6 +12,52 @@ export const DDMM = 'dd.MM'
 export const FULL_DATE = 'dd.MM.yyyy'
 export { TIME_SLOTS }
 
+export const SEMESTER_INFO = {
+  autumn: {
+    id: 'autumn',
+    label: 'Осенний',
+    short: 'Осень',
+    rangeLabel: 'Сентябрь–декабрь',
+    months: [8, 9, 10, 11],
+    startMonth: 8,
+    startDay: 1,
+    endMonth: 11,
+    endDay: 31,
+  },
+  spring: {
+    id: 'spring',
+    label: 'Весенний',
+    short: 'Весна',
+    rangeLabel: 'Январь–июнь',
+    months: [0, 1, 2, 3, 4, 5],
+    startMonth: 0,
+    startDay: 1,
+    endMonth: 5,
+    endDay: 30,
+  },
+}
+
+export function getSemesterForDate(date = new Date()) {
+  return date.getMonth() >= 7 ? 'autumn' : 'spring'
+}
+
+export function getSemesterInfo(semester = 'autumn') {
+  return SEMESTER_INFO[semester] || SEMESTER_INFO.autumn
+}
+
+export function getSemesterRange(year, semester = 'autumn') {
+  const info = getSemesterInfo(semester)
+  return {
+    start: new Date(year, info.startMonth, info.startDay),
+    end: new Date(year, info.endMonth, info.endDay),
+  }
+}
+
+export function isDateInSemester(date, semester = 'autumn') {
+  const { start, end } = getSemesterRange(date.getFullYear(), semester)
+  return date >= start && date <= end
+}
+
 // Преобразование "DD.MM" в полноценную дату текущего года
 export function parseDDMM(str, year = new Date().getFullYear()) {
   return parse(str, DDMM, new Date(year, 0, 1))
@@ -24,19 +68,19 @@ export function toDDMM(date) {
 }
 
 // Номер недели с 01.09 (неделя 0 = чётная, неделя 1 = нечётная)
-export function getWeekIndex(date) {
-  const semesterStart = parseDDMM(SEMESTER_START, date.getFullYear())
-  // Понедельник недели, в которую попадает 01.09
-  const baseMonday = startOfWeek(semesterStart, { weekStartsOn: 1 })
+export function getWeekIndex(date, semester = getSemesterForDate(date)) {
+  const { start } = getSemesterRange(date.getFullYear(), semester)
+  // Понедельник недели, в которую попадает начало семестра
+  const baseMonday = startOfWeek(start, { weekStartsOn: 1 })
   const dateMonday = startOfWeek(date, { weekStartsOn: 1 })
   return differenceInCalendarWeeks(dateMonday, baseMonday, { weekStartsOn: 1 })
 }
 
 // Тип недели: 'odd' | 'even' | 'single'
-export function getWeekType(date, data) {
+export function getWeekType(date, data, semester = getSemesterForDate(date)) {
   const singleDates = data?.single_event_dates || []
   if (singleDates.includes(toDDMM(date))) return 'single'
-  const idx = getWeekIndex(date)
+  const idx = getWeekIndex(date, semester)
   // idx даже => чётная, idx нечёт => нечётная (неделя 0 = чётная)
   return idx % 2 === 0 ? 'even' : 'odd'
 }
@@ -334,9 +378,9 @@ export function isLessonUpcoming(lesson, now = new Date()) {
 }
 
 // Плоский список всех вхождений семестра (с объединением одинаковых пар по группам)
-export function buildLessonIndex(data, year = new Date().getFullYear()) {
+export function buildLessonIndex(data, year = new Date().getFullYear(), semester = 'autumn') {
   const lessons = []
-  for (const date of getSeasonDates(year)) {
+  for (const date of getSeasonDates(year, semester)) {
     for (const pair of getPairsForDate(date, 'all', {}, data)) {
       const groups = splitGroups(pair.groups && pair.groups.length ? pair.groups : pair.group)
       if (!groups.length) continue
@@ -350,7 +394,7 @@ export function buildLessonIndex(data, year = new Date().getFullYear()) {
         groups,
         special: !!pair.special,
         weekday: date.getDay() === 0 ? 7 : date.getDay(),
-        week: getWeekIndex(date),
+        week: getWeekIndex(date, semester),
       })
     }
   }
@@ -358,9 +402,9 @@ export function buildLessonIndex(data, year = new Date().getFullYear()) {
 }
 
 // Базовые данные статистики: индекс занятий и список групп
-export function buildLessonStats(data, from = new Date()) {
+export function buildLessonStats(data, from = new Date(), semester = 'autumn') {
   const seasonYear = from.getFullYear()
-  const lessons = buildLessonIndex(data, seasonYear)
+  const lessons = buildLessonIndex(data, seasonYear, semester)
   const groupSet = new Set()
   const teacherSet = new Set()
   for (const lesson of lessons) {
@@ -369,6 +413,7 @@ export function buildLessonStats(data, from = new Date()) {
   }
   return {
     seasonYear,
+    semester,
     lessons,
     groups: [...groupSet].sort((a, b) => a.localeCompare(b, 'ru')),
     teachers: [...teacherSet].sort((a, b) => a.localeCompare(b, 'ru')),
@@ -393,10 +438,11 @@ function countWindows(lessons) {
   return total
 }
 
-// Диапазон периода: 'semester' | 'remaining' | 'month-8'..'month-11'
-export function statsPeriodRange(period, year, now = new Date()) {
-  const seasonStart = parseDDMM(SEMESTER_START, year)
-  const seasonEnd = addDays(parseDDMM(SEMESTER_END, year), 1)
+// Диапазон периода: 'semester' | 'remaining' | 'month-0'..'month-11'
+export function statsPeriodRange(period, year, now = new Date(), semester = 'autumn') {
+  const range = getSemesterRange(year, semester)
+  const seasonStart = range.start
+  const seasonEnd = addDays(range.end, 1)
   if (period === 'remaining') {
     let from = startOfDay(now)
     if (from < seasonStart) from = seasonStart
@@ -405,7 +451,11 @@ export function statsPeriodRange(period, year, now = new Date()) {
   }
   if (typeof period === 'string' && period.startsWith('month-')) {
     const month = Number(period.slice(6))
-    return { from: new Date(year, month, 1), to: new Date(year, month + 1, 1) }
+    // Месяц из другого семестра игнорируем — показываем весь семестр
+    if (getSemesterInfo(semester).months.includes(month)) {
+      return { from: new Date(year, month, 1), to: new Date(year, month + 1, 1) }
+    }
+    return { from: seasonStart, to: seasonEnd }
   }
   return { from: seasonStart, to: seasonEnd }
 }
@@ -413,12 +463,13 @@ export function statsPeriodRange(period, year, now = new Date()) {
 // Агрегация статистики по группе, преподавателю и периоду
 export function aggregateLessonStats(
   lessons,
-  { group = 'all', teacher = 'all', period = 'semester', now = new Date() } = {}
+  { group = 'all', teacher = 'all', period = 'semester', now = new Date(), semester = 'autumn', year = undefined } = {}
 ) {
-  const year = lessons.length ? lessons[0].date.getFullYear() : now.getFullYear()
-  const seasonStart = parseDDMM(SEMESTER_START, year)
-  const seasonEnd = addDays(parseDDMM(SEMESTER_END, year), 1)
-  const range = statsPeriodRange(period, year, now)
+  const targetYear = year ?? (lessons.length ? lessons[0].date.getFullYear() : now.getFullYear())
+  const semesterRange = getSemesterRange(targetYear, semester)
+  const seasonStart = semesterRange.start
+  const seasonEnd = addDays(semesterRange.end, 1)
+  const range = statsPeriodRange(period, targetYear, now, semester)
 
   const inSeason = lessons.filter(
     (l) =>
@@ -630,9 +681,9 @@ export function aggregateLessonStats(
     .filter((t) => t.total > 0)
 
   const baseMonday = startOfWeek(seasonStart, { weekStartsOn: 1 })
-  const seasonLastWeek = getWeekIndex(addDays(seasonEnd, -1))
-  const firstWeek = Math.max(0, getWeekIndex(range.from))
-  const lastWeek = Math.min(seasonLastWeek, getWeekIndex(addDays(range.to, -1)))
+  const seasonLastWeek = getWeekIndex(addDays(seasonEnd, -1), semester)
+  const firstWeek = Math.max(0, getWeekIndex(range.from, semester))
+  const lastWeek = Math.min(seasonLastWeek, getWeekIndex(addDays(range.to, -1), semester))
   const byWeek = []
   for (let week = firstWeek; week <= lastWeek; week++) {
     const monday = addDays(baseMonday, week * 7)
@@ -717,11 +768,10 @@ export function aggregateLessonStats(
   }
 }
 
-// Формирование диапазона дат для навигации — с 1 сентября по 31 декабря.
+// Формирование диапазона дат для навигации по выбранному семестру.
 // Отсчёт ленты идёт с начала семестра; пары есть только на даты из данных.
-export function getSeasonDates(year = new Date().getFullYear()) {
-  const start = parseDDMM(SEMESTER_START, year)
-  const end = parseDDMM(SEMESTER_END, year)
+export function getSeasonDates(year = new Date().getFullYear(), semester = 'autumn') {
+  const { start, end } = getSemesterRange(year, semester)
   const dates = []
   const cur = new Date(start)
   while (cur <= end) {

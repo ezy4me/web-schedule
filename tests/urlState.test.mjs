@@ -30,6 +30,23 @@ test('readUrlState falls back on unknown tab and period', () => {
   assert.equal(state.period, 'semester')
 })
 
+test('семестр сохраняется в URL и читается обратно', () => {
+  const hash = buildHash({ page: 'stats', date: '2027-02-15', semester: 'spring', period: 'month-1' })
+  assert.match(hash, /semester=spring/)
+  const state = readUrlState(hash)
+  assert.equal(state.semester, 'spring')
+  assert.equal(state.period, 'month-1')
+
+  assert.equal(readUrlState('#schedule?semester=autumn').semester, 'autumn')
+  assert.equal(readUrlState('#schedule?semester=summer').semester, null)
+  assert.equal(readUrlState('#schedule').semester, null)
+  assert.doesNotMatch(buildHash({ date: '2026-10-22' }), /semester=/)
+})
+
+test('readUrlState принимает период «Остаток»', () => {
+  assert.equal(readUrlState('#stats?period=remaining').period, 'remaining')
+})
+
 test('readUrlState treats unknown page as schedule', () => {
   assert.equal(readUrlState('#teachers?group=4433').page, 'schedule')
   assert.equal(readUrlState('').page, 'schedule')

@@ -6,7 +6,12 @@ import { fileURLToPath } from 'node:url'
 import {
   aggregateLessonStats,
   buildLessonStats,
+  getSemesterForDate,
+  getSemesterInfo,
+  getSemesterRange,
+  isDateInSemester,
   normalizeSchedule,
+  statsPeriodRange,
 } from '../src/utils/schedule.js'
 import { LESSON_ACADEMIC_HOURS } from '../src/utils/stats.js'
 
@@ -19,6 +24,16 @@ const readSource = (name) =>
 
 const stats = buildLessonStats(readSource('maximov.json'), yearStart)
 const semester = aggregateLessonStats(stats.lessons, { period: 'semester', now })
+
+const springYearStart = new Date(2027, 0, 1)
+const springStats = buildLessonStats(readSource('maximov.json'), springYearStart, 'spring')
+const springNow = new Date(2027, 1, 1, 12, 0, 0)
+const springSemester = aggregateLessonStats(springStats.lessons, {
+  period: 'semester',
+  now: springNow,
+  semester: 'spring',
+  year: 2027,
+})
 
 const sum = (rows, key) => rows.reduce((total, row) => total + row[key], 0)
 
@@ -139,4 +154,87 @@ test('семестр до начала и после конца', () => {
   assert.equal(after.totals.remaining, 0)
   assert.equal(after.totals.progress, 100)
   assert.equal(after.totals.weeksLeft, 0)
+})
+
+test('семестры: границы и автоопределение по дате', () => {
+  const autumn = getSemesterRange(2026, 'autumn')
+  assert.equal(autumn.start.getMonth(), 8)
+  assert.equal(autumn.start.getDate(), 1)
+  assert.equal(autumn.end.getMonth(), 11)
+  assert.equal(autumn.end.getDate(), 31)
+
+  const spring = getSemesterRange(2027, 'spring')
+  assert.equal(spring.start.getMonth(), 0)
+  assert.equal(spring.start.getDate(), 1)
+  assert.equal(spring.end.getMonth(), 5)
+  assert.equal(spring.end.getDate(), 30)
+
+  assert.equal(getSemesterForDate(new Date(2026, 8, 1)), 'autumn')
+  assert.equal(getSemesterForDate(new Date(2026, 11, 31)), 'autumn')
+  assert.equal(getSemesterForDate(new Date(2027, 0, 1)), 'spring')
+  assert.equal(getSemesterForDate(new Date(2027, 5, 30)), 'spring')
+
+  assert.ok(isDateInSemester(new Date(2027, 0, 10), 'spring'))
+  assert.ok(!isDateInSemester(new Date(2026, 8, 10), 'spring'))
+  assert.ok(!isDateInSemester(new Date(2027, 0, 10), 'autumn'))
+  assert.deepEqual(getSemesterInfo('spring').months, [0, 1, 2, 3, 4, 5])
+})
+
+test('весенний семестр: индекс занятий maximov', () => {
+  assert.equal(springStats.semester, 'spring')
+  assert.equal(springStats.seasonYear, 2027)
+  assert.equal(springStats.lessons.length, 233)
+  assert.equal(springStats.groups.length, 8)
+  assert.deepEqual(springStats.groups, [
+    '4232',
+    '4233',
+    '4235',
+    '4237',
+    '4332',
+    '4333',
+    '4335',
+    '4337',
+  ])
+})
+
+test('весенний семестр: нагрузка по месяцам', () => {
+  const months = [0, 1, 2, 3, 4, 5].map(
+    (month) =>
+      aggregateLessonStats(springStats.lessons, {
+        period: `month-${month}`,
+        now: springNow,
+        semester: 'spring',
+        year: 2027,
+      }).totals.pairs
+  )
+  assert.deepEqual(months, [36, 47, 53, 50, 45, 2])
+  assert.equal(
+    months.reduce((sum, pairs) => sum + pairs, 0),
+    springSemester.totals.pairs
+  )
+})
+
+test('весенний семестр: итоги и остаток на 1 февраля', () => {
+  assert.equal(springSemester.totals.pairs, 233)
+  assert.equal(springSemester.totals.groupPairs, 275)
+  assert.equal(springSemester.totals.past, 36)
+  assert.equal(springSemester.totals.remaining, 197)
+  assert.equal(springSemester.totals.progress, 15.5)
+  assert.equal(springSemester.totals.academicHours, 233 * LESSON_ACADEMIC_HOURS)
+
+  const remaining = aggregateLessonStats(springStats.lessons, {
+    period: 'remaining',
+    now: springNow,
+    semester: 'spring',
+    year: 2027,
+  })
+  assert.equal(remaining.totals.pairs, 197)
+  assert.equal(remaining.totals.past, 0)
+})
+
+test('месяц из другого семестра не ломает диапазон', () => {
+  const range = statsPeriodRange('month-9', 2027, springNow, 'spring')
+  const semesterRange = getSemesterRange(2027, 'spring')
+  assert.equal(range.from.getTime(), semesterRange.start.getTime())
+  assert.equal(range.to.getTime(), new Date(2027, 6, 1).getTime())
 })

@@ -1,5 +1,10 @@
 const STATS_TABS = new Set(['overview', 'breakdown', 'calendar', 'remaining'])
-const STATS_PERIODS = new Set(['semester', 'month-8', 'month-9', 'month-10', 'month-11'])
+const STATS_PERIODS = new Set([
+  'semester',
+  'remaining',
+  ...Array.from({ length: 12 }, (_, month) => `month-${month}`),
+])
+const SEMESTERS = new Set(['autumn', 'spring'])
 
 export function readUrlState(hash = '') {
   const raw = String(hash || '').replace(/^#/, '')
@@ -8,12 +13,14 @@ export function readUrlState(hash = '') {
   const params = new URLSearchParams(query)
   const tab = params.get('tab')
   const period = params.get('period')
+  const semester = params.get('semester')
   return {
     page,
     date: params.get('date') || null,
     group: params.get('group') || null,
     teacher: params.get('teacher') || null,
     source: params.get('source') || null,
+    semester: SEMESTERS.has(semester) ? semester : null,
     tab: STATS_TABS.has(tab) ? tab : 'overview',
     period: STATS_PERIODS.has(period) ? period : 'semester',
   }
@@ -25,6 +32,7 @@ export function buildHash({
   group = 'all',
   teacher = 'all',
   source = '',
+  semester = 'autumn',
   tab = 'overview',
   period = 'semester',
 } = {}) {
@@ -33,6 +41,7 @@ export function buildHash({
   if (group && group !== 'all') params.set('group', group)
   if (teacher && teacher !== 'all') params.set('teacher', teacher)
   if (source && source !== 'maximov') params.set('source', source)
+  if (semester && semester !== 'autumn') params.set('semester', semester)
   if (page === 'stats') {
     if (tab !== 'overview') params.set('tab', tab)
     if (period !== 'semester') params.set('period', period)

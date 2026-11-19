@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { CalendarDays, CalendarRange, BarChart3, UploadCloud, X, CheckCircle2, CalendarHeart, Loader2, Sun, Moon, Database, Share2, ShieldCheck, AlertTriangle } from 'lucide-react'
-import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow, buildLessonStats } from './utils/schedule.js'
+import { getPairsForDate, getWeekType, normalizeSchedule, buildTimeline, buildEmptyDaySet, getSeasonDates, isLessonNow, buildLessonStats, getSemesterForDate, getSemesterRange, isDateInSemester, SEMESTER_INFO } from './utils/schedule.js'
 import { readUrlState, writeUrlState, parseUrlDate } from './utils/urlState.js'
 import { validateSchedule } from './utils/validateSchedule.js'
 import { WEEK_TYPE_INFO } from './constants.js'
@@ -52,6 +52,23 @@ function getDefaultDate() {
   return new Date()
 }
 
+// Календарный год начала семестра относительно выбранной даты.
+function getSemesterYearForDate(date, semester) {
+  if (semester === 'spring') {
+    return date.getMonth() >= 7 ? date.getFullYear() + 1 : date.getFullYear()
+  }
+  return date.getMonth() >= 7 ? date.getFullYear() : date.getFullYear() - 1
+}
+
+// Месяц статистики должен принадлежать выбранному семестру.
+function normalizeStatsPeriod(period, semester) {
+  const info = SEMESTER_INFO[semester] || SEMESTER_INFO.autumn
+  if (typeof period === 'string' && period.startsWith('month-')) {
+    return info.months.includes(Number(period.slice(6))) ? period : 'semester'
+  }
+  return period
+}
+
 function getInitialSourceId() {
   try {
     const saved = localStorage.getItem(LS_SOURCE_KEY)
@@ -84,7 +101,19 @@ function hasScheduleData(normalized) {
 
 export default function App() {
   const [initialUrl] = useState(() => readUrlState(window.location.hash))
-  const [selected, setSelected] = useState(() => parseUrlDate(initialUrl.date) || getDefaultDate())
+  const [selected, setSelected] = useState(() => {
+    const parsed = parseUrlDate(initialUrl.date) || getDefaultDate()
+    if (initialUrl.semester && !isDateInSemester(parsed, initialUrl.semester)) {
+      return getSemesterRange(
+        getSemesterYearForDate(parsed, initialUrl.semester),
+        initialUrl.semester
+      ).start
+    }
+    return parsed
+  })
+  const [semester, setSemester] = useState(
+    () => initialUrl.semester || getSemesterForDate(selected)
+  )
   const [showPicker, setShowPicker] = useState(false)
   const [showData, setShowData] = useState(false)
   const [group, setGroup] = useState(() => initialUrl.group || getInitialGroup())
@@ -104,7 +133,9 @@ export default function App() {
   const [theme, setTheme] = useState(getInitialTheme)
   const [now, setNow] = useState(() => new Date())
   const [statsTab, setStatsTab] = useState(initialUrl.tab)
-  const [statsPeriod, setStatsPeriod] = useState(initialUrl.period)
+  const [statsPeriod, setStatsPeriod] = useState(() =>
+    normalizeStatsPeriod(initialUrl.period, initialUrl.semester || getSemesterForDate(selected))
+  )
   const [page, setPage] = useState(initialUrl.page)
   const [toast, setToast] = useState(null)
   const fileInputRef = useRef(null)
@@ -153,7 +184,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const weekType = getWeekType(selected, data)
+  const weekType = getWeekType(selected, data, semester)
   const weekInfo = WEEK_TYPE_INFO[weekType]
 
   const pairs = useMemo(
@@ -166,9 +197,9 @@ export default function App() {
 
   // Дни без пар (выходные) для текущей группы — маркировка в ленте и календаре
   const emptyDays = useMemo(
-    () => buildEmptyDaySet(getSeasonDates(selected.getFullYear()), group, data),
+    () => buildEmptyDaySet(getSeasonDates(selected.getFullYear(), semester), group, data),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selected.getFullYear(), group, data]
+    [selected.getFullYear(), semester, group, data]
   )
 
   const isTodaySelected = isSameDay(selected, now)
@@ -180,12 +211,16 @@ export default function App() {
   // Семестр берём из выбранной даты, чтобы статистика не уезжала в другой год.
   const seasonYear = selected.getFullYear()
   const stats = useMemo(
-    () => buildLessonStats(data, new Date(seasonYear, 0, 1)),
-    [data, seasonYear]
+    () => buildLessonStats(data, new Date(seasonYear, 0, 1), semester),
+    [data, seasonYear, semester]
   )
   const health = useMemo(
     () => validateSchedule(stats.lessons, data.groups),
     [stats.lessons, data.groups]
+  )
+  const semesterRange = useMemo(
+    () => getSemesterRange(seasonYear, semester),
+    [seasonYear, semester]
   )
 
   useEffect(() => {
@@ -195,10 +230,11 @@ export default function App() {
       group,
       teacher,
       source: sourceId === 'custom' ? '' : sourceId,
+      semester,
       tab: statsTab,
       period: statsPeriod,
     })
-  }, [page, selected, group, teacher, sourceId, statsTab, statsPeriod])
+  }, [page, selected, group, teacher, sourceId, semester, statsTab, statsPeriod])
 
   // Ссылка из URL может ссылаться на группу/преподавателя из другого файла.
   // Проверяем только после загрузки нужного источника, иначе сбросим фильтр раньше времени.
@@ -215,10 +251,13 @@ export default function App() {
       setPage(next.page)
       const nextDate = parseUrlDate(next.date)
       if (nextDate) setSelected(nextDate)
+      const nextSemester =
+        next.semester || getSemesterForDate(nextDate || getDefaultDate())
+      setSemester(nextSemester)
       if (next.group) setGroup(next.group)
       if (next.teacher) setTeacher(next.teacher)
       setStatsTab(next.tab)
-      setStatsPeriod(next.period)
+      setStatsPeriod(normalizeStatsPeriod(next.period, nextSemester))
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
@@ -226,16 +265,50 @@ export default function App() {
 
   const hasFilters = group !== 'all' || teacher !== 'all' || type !== 'all' || query.trim() !== ''
 
-  const goToday = () => setSelected(getDefaultDate())
-  const goTomorrow = () => setSelected(addDays(getDefaultDate(), 1))
+  const selectDate = (date) => {
+    setSelected(date)
+    const nextSemester = getSemesterForDate(date)
+    if (nextSemester !== semester) setSemester(nextSemester)
+  }
+
+  const goToday = () => selectDate(getDefaultDate())
+  const goTomorrow = () => selectDate(addDays(getDefaultDate(), 1))
   const goCurrentWeek = () => {
     const monday = startOfWeek(getDefaultDate(), { weekStartsOn: 1 })
-    setSelected(monday)
+    selectDate(monday)
+  }
+
+  const changeSemester = (next) => {
+    if (next === semester) return
+    const targetYear = getSemesterYearForDate(selected, next)
+    const range = getSemesterRange(targetYear, next)
+    const today = getDefaultDate()
+    let anchor = range.start
+
+    if (today >= range.start && today <= range.end) {
+      anchor = today
+    } else {
+      for (const date of getSeasonDates(targetYear, next)) {
+        if (getPairsForDate(date, 'all', {}, data).length) {
+          anchor = date
+          break
+        }
+      }
+    }
+
+    setSemester(next)
+    setSelected(anchor)
+    setGroup('all')
+    setTeacher('all')
+    setType('all')
+    setQuery('')
+    setStatsPeriod('semester')
   }
 
   // Переход из статистики в расписание на конкретную дату
   const openDateInSchedule = (date) => {
     setSelected(date)
+    setSemester(getSemesterForDate(date))
     setShowPicker(false)
     switchPage('schedule')
   }
@@ -411,6 +484,46 @@ export default function App() {
             {weekInfo.label}
           </div>
         </header>
+
+        {/* Выбор семестра */}
+        <div className="mb-3">
+          <div className="grid grid-cols-2 gap-1 rounded-xl border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
+            {Object.values(SEMESTER_INFO).map((info) => {
+              const active = semester === info.id
+              return (
+                <button
+                  key={info.id}
+                  type="button"
+                  onClick={() => changeSemester(info.id)}
+                  aria-pressed={active}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  {info.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="mt-1.5 px-1 text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500">
+            {format(semesterRange.start, 'd MMMM yyyy', { locale: ru })} —{' '}
+            {format(semesterRange.end, 'd MMMM yyyy', { locale: ru })}
+            {' · '}
+            {stats.lessons.length} пар
+          </p>
+        </div>
+
+        {stats.lessons.length === 0 && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <span>
+              За {semester === 'spring' ? 'весенний' : 'осенний'} семестр расписания нет.
+              Выберите другой семестр или загрузите свой JSON.
+            </span>
+          </div>
+        )}
 
         {/* Переключение страниц: расписание / статистика */}
         <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-800/50">
@@ -590,7 +703,8 @@ export default function App() {
                 />
                 <CalendarPicker
                   selected={selected}
-                  onSelect={setSelected}
+                  semester={semester}
+                  onSelect={selectDate}
                   onClose={() => setShowPicker(false)}
                   emptyDays={emptyDays}
                 />
@@ -600,7 +714,15 @@ export default function App() {
         </div>
 
         {/* Лента дней */}
-        <DayRibbon selected={selected} onSelect={(d) => { setSelected(d); setShowPicker(false) }} emptyDays={emptyDays} />
+        <DayRibbon
+          selected={selected}
+          semester={semester}
+          onSelect={(date) => {
+            selectDate(date)
+            setShowPicker(false)
+          }}
+          emptyDays={emptyDays}
+        />
 
         {/* Фильтры */}
         <div className="mt-4">

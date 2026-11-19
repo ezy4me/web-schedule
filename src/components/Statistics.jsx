@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { BarChart3, CalendarRange, Clock, Download, Layers, Users } from 'lucide-react'
-import { aggregateLessonStats } from '../utils/schedule.js'
+import { aggregateLessonStats, getSemesterInfo } from '../utils/schedule.js'
 import { buildICS, downloadICS } from '../utils/ics.js'
 import { capitalizeFirst } from '../utils/statsFormat.js'
 import StatsOverview from './StatsOverview.jsx'
@@ -53,8 +53,16 @@ export default function Statistics({
   }, [stats])
 
   const view = useMemo(
-    () => aggregateLessonStats(stats.lessons, { group, teacher, period, now }),
-    [stats.lessons, group, teacher, period, now]
+    () =>
+      aggregateLessonStats(stats.lessons, {
+        group,
+        teacher,
+        period,
+        now,
+        semester: stats.semester,
+        year: stats.seasonYear,
+      }),
+    [stats.lessons, stats.semester, stats.seasonYear, group, teacher, period, now]
   )
 
   const teacherOptions = [
@@ -85,9 +93,10 @@ export default function Statistics({
     downloadICS(filename, buildICS(exportLessons, { calendarName }))
   }
 
+  const semesterInfo = getSemesterInfo(stats.semester)
   const periods = [
     ...BASE_PERIODS,
-    ...[8, 9, 10, 11].map((month) => ({
+    ...semesterInfo.months.map((month) => ({
       id: `month-${month}`,
       label: capitalizeFirst(format(new Date(stats.seasonYear, month, 1), 'LLL', { locale: ru })),
     })),
@@ -100,7 +109,7 @@ export default function Statistics({
     <section className="space-y-4">
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Сентябрь–декабрь {stats.seasonYear}
+          {semesterInfo.rangeLabel} {stats.seasonYear}
           {group !== 'all' ? ` · группа ${group}` : ''}
           {teacher !== 'all' ? ` · ${teacher}` : ''}
         </p>

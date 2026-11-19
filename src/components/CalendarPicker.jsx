@@ -1,15 +1,18 @@
 import React, { useMemo, useState } from 'react'
-import { format, startOfMonth, endOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, addMonths, subMonths } from 'date-fns'
+import { format, startOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, addMonths, subMonths } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { getSeasonDates, getWeekType, toDDMM } from '../utils/schedule.js'
+import { getSeasonDates, getSemesterInfo, getWeekType } from '../utils/schedule.js'
 
 const WEEKDAY = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 // Всплывающий календарь-месяц
-export default function CalendarPicker({ selected, onSelect, onClose, emptyDays }) {
+export default function CalendarPicker({ selected, semester = 'autumn', onSelect, onClose, emptyDays }) {
   const [viewMonth, setViewMonth] = useState(startOfMonth(selected))
-  const seasonDates = useMemo(() => getSeasonDates(selected.getFullYear()), [selected])
+  const seasonDates = useMemo(
+    () => getSeasonDates(selected.getFullYear(), semester),
+    [selected.getFullYear(), semester]
+  )
   const seasonSet = useMemo(
     () => new Set(seasonDates.map((d) => d.toISOString())),
     [seasonDates]
@@ -20,8 +23,9 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
     return Array.from({ length: 42 }, (_, i) => addDays(start, i))
   }, [viewMonth])
 
-  const canPrev = viewMonth > startOfMonth(new Date(selected.getFullYear(), 8, 1)) // сентябрь
-  const canNext = viewMonth < startOfMonth(new Date(selected.getFullYear(), 11, 1)) // декабрь
+  const semesterInfo = getSemesterInfo(semester)
+  const canPrev = viewMonth > startOfMonth(new Date(selected.getFullYear(), semesterInfo.startMonth, 1))
+  const canNext = viewMonth < startOfMonth(new Date(selected.getFullYear(), semesterInfo.endMonth, 1))
 
   return (
     <div className="absolute right-0 z-20 mt-1.5 w-[300px] max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-200 bg-white p-4 shadow-pop dark:border-zinc-800 dark:bg-zinc-900">
@@ -56,7 +60,7 @@ export default function CalendarPicker({ selected, onSelect, onClose, emptyDays 
           const isWeekend = inRange && !active && emptyDays?.has(cell.toISOString())
           const today = isSameDay(cell, new Date())
           const sameMonth = isSameMonth(cell, viewMonth)
-          const type = inRange ? getWeekType(cell) : null
+          const type = inRange ? getWeekType(cell, undefined, semester) : null
           const dotColor = type === 'odd' ? 'bg-indigo-500' : type === 'even' ? 'bg-sky-500' : type === 'single' ? 'bg-rose-500' : ''
           return (
             <button

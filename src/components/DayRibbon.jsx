@@ -15,8 +15,11 @@ function weekLabel(selected) {
 
 // Горизонтальная лента дней (mobile-first, с прокруткой).
 // При открытии и смене даты автоматически прокручивается к актуальной неделе.
-export default function DayRibbon({ selected, onSelect, emptyDays }) {
-  const dates = useMemo(() => getSeasonDates(selected.getFullYear()), [selected.getFullYear()])
+export default function DayRibbon({ selected, semester = 'autumn', onSelect, emptyDays }) {
+  const dates = useMemo(
+    () => getSeasonDates(selected.getFullYear(), semester),
+    [selected.getFullYear(), semester]
+  )
   const listRef = useRef(null)
   const activeRef = useRef(null)
   const firstRender = useRef(true)
