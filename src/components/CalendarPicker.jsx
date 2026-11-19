@@ -6,7 +6,7 @@ import { getSeasonDates, getSemesterInfo, getWeekType } from '../utils/schedule.
 
 const WEEKDAY = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
-// Всплывающий календарь-месяц
+// Всплывающий календарь-месяц: на телефоне — по центру экрана, на десктопе — под кнопкой
 export default function CalendarPicker({ selected, semester = 'autumn', onSelect, onClose, emptyDays }) {
   const [viewMonth, setViewMonth] = useState(startOfMonth(selected))
   const seasonDates = useMemo(
@@ -28,20 +28,24 @@ export default function CalendarPicker({ selected, semester = 'autumn', onSelect
   const canNext = viewMonth < startOfMonth(new Date(selected.getFullYear(), semesterInfo.endMonth, 1))
 
   return (
-    <div className="absolute right-0 z-20 mt-1.5 w-[300px] max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-200 bg-white p-4 shadow-pop dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="fixed left-1/2 top-1/2 z-30 w-[min(21rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-stone-200 bg-white p-4 shadow-pop sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-1.5 sm:w-[300px] sm:translate-x-0 sm:translate-y-0 dark:border-stone-700 dark:bg-stone-900">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <button
           onClick={() => canPrev && setViewMonth(subMonths(viewMonth, 1))}
           disabled={!canPrev}
-          className="rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="grid h-8 w-8 place-items-center rounded-md text-ink-muted transition-colors hover:bg-stone-100 hover:text-ink disabled:opacity-30 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          aria-label="Предыдущий месяц"
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="font-medium capitalize text-zinc-800 dark:text-zinc-100">{format(viewMonth, 'LLLL yyyy', { locale: ru })}</div>
+        <div className="text-sm font-medium capitalize text-ink dark:text-stone-100">
+          {format(viewMonth, 'LLLL yyyy', { locale: ru })}
+        </div>
         <button
           onClick={() => canNext && setViewMonth(addMonths(viewMonth, 1))}
           disabled={!canNext}
-          className="rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="grid h-8 w-8 place-items-center rounded-md text-ink-muted transition-colors hover:bg-stone-100 hover:text-ink disabled:opacity-30 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          aria-label="Следующий месяц"
         >
           <ChevronRight size={18} />
         </button>
@@ -49,7 +53,7 @@ export default function CalendarPicker({ selected, semester = 'autumn', onSelect
 
       <div className="mb-1 grid grid-cols-7 gap-1 text-center">
         {WEEKDAY.map((w) => (
-          <div key={w} className="py-1 text-[10px] font-medium text-zinc-400">{w}</div>
+          <div key={w} className="py-1 text-[10px] font-medium text-ink-faint dark:text-stone-500">{w}</div>
         ))}
       </div>
 
@@ -61,7 +65,14 @@ export default function CalendarPicker({ selected, semester = 'autumn', onSelect
           const today = isSameDay(cell, new Date())
           const sameMonth = isSameMonth(cell, viewMonth)
           const type = inRange ? getWeekType(cell, undefined, semester) : null
-          const dotColor = type === 'odd' ? 'bg-indigo-500' : type === 'even' ? 'bg-sky-500' : type === 'single' ? 'bg-rose-500' : ''
+          const dotColor =
+            type === 'odd'
+              ? 'bg-ink dark:bg-stone-200'
+              : type === 'even'
+                ? 'bg-stone-400 dark:bg-stone-500'
+                : type === 'single'
+                  ? 'bg-clay-600 dark:bg-clay-400'
+                  : ''
           return (
             <button
               key={cell.toISOString()}
@@ -70,32 +81,38 @@ export default function CalendarPicker({ selected, semester = 'autumn', onSelect
                 onSelect(cell)
                 onClose()
               }}
-              className={`relative flex h-9 items-center justify-center rounded-md text-sm transition-colors
+              aria-label={format(cell, 'd MMMM yyyy', { locale: ru })}
+              aria-pressed={active}
+              className={`relative flex h-10 items-center justify-center rounded-md text-sm tabular-nums transition-colors sm:h-9
                 ${!inRange
-                  ? 'cursor-not-allowed text-zinc-200 dark:text-zinc-700'
+                  ? 'cursor-not-allowed text-stone-300 dark:text-stone-700'
                   : active
-                    ? 'bg-indigo-600 font-medium text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400'
+                    ? 'bg-ink font-medium text-paper dark:bg-stone-100 dark:text-ink'
                     : isWeekend
-                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400/90 dark:hover:bg-amber-500/20'
+                      ? 'text-ink-faint hover:bg-stone-100 dark:text-stone-500 dark:hover:bg-stone-800'
                       : sameMonth
-                        ? 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
-                        : 'text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800'}
-                ${today && !active ? 'ring-1 ring-inset ring-zinc-400 dark:ring-zinc-500' : ''}`}
+                        ? 'text-ink-soft hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800'
+                        : 'text-ink-faint hover:bg-stone-100 dark:text-stone-500 dark:hover:bg-stone-800'}
+                ${today && !active ? 'ring-1 ring-inset ring-clay-400 dark:ring-clay-500' : ''}`}
             >
               {format(cell, 'd')}
               {inRange && dotColor && (
-                <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${active ? 'bg-white' : dotColor}`} />
+                <span
+                  className={`absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${
+                    active ? 'bg-paper dark:bg-ink' : dotColor
+                  }`}
+                />
               )}
             </button>
           )
         })}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />Нечётная</span>
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-sky-500" />Чётная</span>
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rose-500" />Особый день</span>
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />Выходной</span>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-muted dark:text-stone-400">
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-ink dark:bg-stone-200" />Нечётная</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-stone-400" />Чётная</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-clay-600 dark:bg-clay-400" />Особый день</span>
+        <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-sm border border-dashed border-stone-400" />Нет пар</span>
       </div>
     </div>
   )

@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { BarChart3, CalendarRange, Clock, Download, Layers, Users } from 'lucide-react'
+import { BarChart3, CalendarRange, Clock, Download, Layers, PieChart, Users } from 'lucide-react'
 import { aggregateLessonStats, getSemesterInfo } from '../utils/schedule.js'
 import { buildICS, downloadICS } from '../utils/ics.js'
 import { capitalizeFirst } from '../utils/statsFormat.js'
 import StatsOverview from './StatsOverview.jsx'
+import StatsAnalytics from './StatsAnalytics.jsx'
 import StatsBreakdown from './StatsBreakdown.jsx'
 import StatsCalendar from './StatsCalendar.jsx'
 import StatsRemaining from './StatsRemaining.jsx'
@@ -13,6 +14,7 @@ import NiceSelect from './NiceSelect.jsx'
 
 const TABS = [
   { id: 'overview', label: 'Обзор', icon: BarChart3 },
+  { id: 'analytics', label: 'Графики', icon: PieChart },
   { id: 'breakdown', label: 'Разрезы', icon: Layers },
   { id: 'calendar', label: 'Календарь', icon: CalendarRange },
   { id: 'remaining', label: 'Осталось', icon: Clock },
@@ -25,8 +27,8 @@ const BASE_PERIODS = [
 
 function chipClass(active) {
   return active
-    ? 'border-indigo-600 bg-indigo-600 text-white'
-    : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800'
+    ? 'border-ink bg-ink text-paper dark:border-stone-100 dark:bg-stone-100 dark:text-ink'
+    : 'border-stone-200 bg-white text-ink-muted hover:border-stone-300 hover:bg-stone-50 hover:text-ink dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-100'
 }
 
 export default function Statistics({
@@ -102,13 +104,13 @@ export default function Statistics({
     })),
   ]
 
-  const showPeriod = tab === 'overview' || tab === 'breakdown'
+  const showPeriod = tab === 'overview' || tab === 'breakdown' || tab === 'analytics'
   const hasFilter = group !== 'all' || teacher !== 'all'
 
   return (
     <section className="space-y-4">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <p className="min-w-0 text-xs text-ink-muted dark:text-stone-400">
           {semesterInfo.rangeLabel} {stats.seasonYear}
           {group !== 'all' ? ` · группа ${group}` : ''}
           {teacher !== 'all' ? ` · ${teacher}` : ''}
@@ -121,7 +123,7 @@ export default function Statistics({
                 onGroupChange('all')
                 onTeacherChange('all')
               }}
-              className="text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="text-xs font-medium text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline dark:text-stone-400 dark:hover:text-stone-100"
             >
               Сбросить
             </button>
@@ -130,7 +132,7 @@ export default function Statistics({
             type="button"
             onClick={exportCalendar}
             disabled={!exportLessons.length}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:text-stone-400 dark:hover:text-stone-100"
             title="Скачать текущую выборку в формате календаря"
           >
             <Download size={13} />
@@ -141,7 +143,7 @@ export default function Statistics({
       </div>
 
       <div>
-        <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint dark:text-stone-500">
           Группа
         </span>
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-thin">
@@ -180,16 +182,16 @@ export default function Statistics({
 
       {showPeriod && (
         <div>
-          <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+          <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint dark:text-stone-500">
             Период
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-thin sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
             {periods.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => onPeriodChange(item.id)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${chipClass(period === item.id)}`}
+                className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${chipClass(period === item.id)}`}
               >
                 {item.label}
               </button>
@@ -198,7 +200,7 @@ export default function Statistics({
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-800/50">
+      <div className="-mx-1 flex gap-0.5 overflow-x-auto rounded-lg border border-stone-200 bg-stone-100/70 p-0.5 scrollbar-thin dark:border-stone-800 dark:bg-stone-900/60">
         {TABS.map((item) => {
           const Icon = item.icon
           const active = tab === item.id
@@ -207,10 +209,11 @@ export default function Statistics({
               key={item.id}
               type="button"
               onClick={() => onTabChange(item.id)}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-[11px] font-medium transition-colors sm:text-xs ${
+              aria-pressed={active}
+              className={`inline-flex min-w-[68px] flex-1 shrink-0 items-center justify-center gap-1.5 rounded-md px-1.5 py-2 text-[11px] font-medium transition-colors sm:text-xs ${
                 active
-                  ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100'
-                  : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  ? 'bg-white text-ink shadow-sm dark:bg-stone-800 dark:text-stone-100'
+                  : 'text-ink-muted hover:text-ink dark:text-stone-400 dark:hover:text-stone-200'
               }`}
             >
               <Icon size={14} className="hidden sm:block" />
@@ -222,6 +225,10 @@ export default function Statistics({
 
       {tab === 'overview' && (
         <StatsOverview view={view} group={group} now={now} onOpenDate={onOpenDate} />
+      )}
+
+      {tab === 'analytics' && (
+        <StatsAnalytics stats={stats} view={view} group={group} teacher={teacher} />
       )}
 
       {tab === 'breakdown' && (

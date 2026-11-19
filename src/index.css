@@ -2,41 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --accent: 162 83 44; /* clay-600 */
+  --hairline: 231 227 220;
+}
+
+.dark {
+  color-scheme: dark;
+  --accent: 209 138 96; /* clay-400 */
+  --hairline: 46 43 39;
+}
+
 html {
   -webkit-tap-highlight-color: transparent;
+  background-color: #faf9f6;
+  scroll-behavior: smooth;
+}
+
+html.dark {
+  background-color: #121110;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-:root {
-  color-scheme: light;
-}
-
-.dark {
-  color-scheme: dark;
-}
-
-/* Чтобы не было белой вспышки до загрузки бандла */
-html {
-  background-color: #fafafa;
-}
-
-html.dark {
-  background-color: #09090b;
+  /* Текст не должен «прыгать» при появлении скроллбара */
+  overflow-y: scroll;
 }
 
 ::selection {
-  background: rgba(24, 24, 27, 0.16);
+  background: rgba(162, 83, 44, 0.18);
 }
 
-/* Тонкий скроллбар для горизонтальной ленты дней */
+.dark ::selection {
+  background: rgba(209, 138, 96, 0.28);
+}
+
+/* Аккуратный фокус для клавиатуры, не мешает мыши */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Тонкий скроллбар для горизонтальных лент */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(161, 161, 170, 0.5) transparent;
+  scrollbar-color: rgba(154, 147, 135, 0.45) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -48,8 +62,70 @@ html.dark {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(161, 161, 170, 0.45);
+  background: rgba(154, 147, 135, 0.4);
   border-radius: 9999px;
+}
+
+/* Совсем скрытый скроллбар (ленты, табы) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Отступ под системный индикатор на iPhone */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.16s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

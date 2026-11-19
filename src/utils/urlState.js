@@ -1,4 +1,4 @@
-const STATS_TABS = new Set(['overview', 'breakdown', 'calendar', 'remaining'])
+const STATS_TABS = new Set(['overview', 'analytics', 'breakdown', 'calendar', 'remaining'])
 const STATS_PERIODS = new Set([
   'semester',
   'remaining',

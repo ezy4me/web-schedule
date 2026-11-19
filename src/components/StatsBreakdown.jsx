@@ -104,20 +104,20 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
           type="button"
           onClick={() => onGroupChange(active ? 'all' : row.key)}
           title={active ? 'Показать все группы' : `Статистика группы ${row.key}`}
-          className={`inline-flex flex-col items-start text-left ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-800 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400'}`}
+          className={`inline-flex flex-col items-start text-left ${active ? 'text-clay-700 dark:text-clay-300' : 'text-ink-soft hover:text-clay-700 dark:text-stone-100 dark:hover:text-clay-300'}`}
         >
           <span className="flex items-center gap-1.5 font-medium">
-            <Users size={13} className="text-zinc-400" />
+            <Users size={13} className="text-ink-faint dark:text-stone-500" />
             {row.name}
           </span>
-          <span className="text-[11px] font-normal text-zinc-400 dark:text-zinc-500">{subjectCount} предм.</span>
+          <span className="text-[11px] font-normal text-ink-faint dark:text-stone-500">{subjectCount} предм.</span>
         </button>
       )
     }
     if (current.id === 'types') {
       return (
         <span className="flex items-center gap-2">
-          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TYPE_STYLES[row.key]?.dot || 'bg-zinc-400'}`} />
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TYPE_STYLES[row.key]?.dot || 'bg-stone-400'}`} />
           {typeLabel(row.key)}
         </span>
       )
@@ -129,13 +129,13 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
           type="button"
           onClick={() => onTeacherChange(active ? 'all' : row.key)}
           title={active ? 'Показать всех преподавателей' : `Статистика преподавателя ${row.key}`}
-          className={`inline-flex max-w-[16rem] items-center gap-1.5 truncate text-left font-medium ${
+          className={`inline-flex max-w-[15rem] items-center gap-1.5 truncate text-left font-medium ${
             active
-              ? 'text-indigo-600 dark:text-indigo-400'
-              : 'text-zinc-800 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400'
+              ? 'text-clay-700 dark:text-clay-300'
+              : 'text-ink-soft hover:text-clay-700 dark:text-stone-100 dark:hover:text-clay-300'
           }`}
         >
-          <Users size={13} className="shrink-0 text-zinc-400" />
+          <Users size={13} className="shrink-0 text-ink-faint dark:text-stone-500" />
           <span className="truncate">{row.name}</span>
         </button>
       )
@@ -143,21 +143,21 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
     if (current.id === 'subjects') {
       return (
         <span className="block min-w-0">
-          <span className="block max-w-[16rem] truncate" title={row.name}>{row.name}</span>
-          <span className="block max-w-[16rem] truncate text-[11px] text-zinc-400 dark:text-zinc-500">
+          <span className="block max-w-[15rem] truncate" title={row.name}>{row.name}</span>
+          <span className="block max-w-[15rem] truncate text-[11px] text-ink-faint dark:text-stone-500">
             {row.groups.join(', ')}
           </span>
         </span>
       )
     }
-    return <span className="block max-w-[16rem] truncate" title={row.name}>{row.name}</span>
+    return <span className="block max-w-[15rem] truncate" title={row.name}>{row.name}</span>
   }
 
   return (
     <div className="space-y-3">
       {(group !== 'all' || teacher !== 'all') && (
-        <div className="flex items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 dark:border-indigo-500/30 dark:bg-indigo-500/10">
-          <span className="min-w-0 truncate text-xs font-medium text-indigo-700 dark:text-indigo-300">
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-clay-200 bg-clay-50/70 px-3 py-2 dark:border-clay-500/30 dark:bg-clay-500/10">
+          <span className="min-w-0 truncate text-xs font-medium text-clay-800 dark:text-clay-300">
             {group !== 'all' ? `Группа ${group}` : ''}
             {group !== 'all' && teacher !== 'all' ? ' · ' : ''}
             {teacher !== 'all' ? teacher : ''}
@@ -168,7 +168,7 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
               onGroupChange('all')
               onTeacherChange('all')
             }}
-            className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+            className="shrink-0 text-xs font-medium text-clay-700 underline-offset-4 hover:underline dark:text-clay-300"
           >
             Сбросить
           </button>
@@ -181,10 +181,11 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
             key={item.id}
             type="button"
             onClick={() => selectDimension(item.id)}
+            aria-pressed={current.id === item.id}
             className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               current.id === item.id
-                ? 'border-indigo-600 bg-indigo-600 text-white'
-                : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800'
+                ? 'border-ink bg-ink text-paper dark:border-stone-100 dark:bg-stone-100 dark:text-ink'
+                : 'border-stone-200 bg-white text-ink-muted hover:border-stone-300 hover:bg-stone-50 hover:text-ink dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-100'
             }`}
           >
             {item.label}
@@ -194,29 +195,29 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
 
       <StatsCard>
         <div className="relative mb-3">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint dark:text-stone-500" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Поиск по названию..."
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-800 transition-colors placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-800"
+            className="w-full rounded-lg border border-stone-200 bg-white py-2 pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-faint focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-clay-600/15 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-stone-600"
           />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full min-w-[320px] text-sm">
             <thead>
-              <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400">
+              <tr className="text-left text-[11px] text-ink-muted dark:text-stone-400">
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    className={`py-2 font-medium ${column.numeric ? 'text-right' : ''} ${column.wideOnly ? 'hidden sm:table-cell' : ''} ${column.key === 'name' ? 'pr-3' : 'pl-2'}`}
+                    className={`whitespace-nowrap py-2 font-medium ${column.numeric ? 'text-right' : ''} ${column.wideOnly ? 'hidden sm:table-cell' : ''} ${column.key === 'name' ? 'pr-3' : 'pl-2'}`}
                   >
                     <button
                       type="button"
                       onClick={() => toggleSort(column.key)}
-                      className={`inline-flex items-center gap-1 transition-colors hover:text-zinc-800 dark:hover:text-zinc-200 ${
-                        sort.key === column.key ? 'text-zinc-800 dark:text-zinc-100' : ''
+                      className={`inline-flex items-center gap-1 transition-colors hover:text-ink dark:hover:text-stone-200 ${
+                        sort.key === column.key ? 'text-ink dark:text-stone-100' : ''
                       }`}
                     >
                       {column.label}
@@ -233,8 +234,8 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
                 const isOpen = expanded === row.key
                 return (
                   <React.Fragment key={row.key}>
-                    <tr className="border-t border-zinc-100 dark:border-zinc-800">
-                      <td className="py-2 pr-3 text-zinc-700 dark:text-zinc-200">
+                    <tr className="border-t border-stone-100 dark:border-stone-800">
+                      <td className="py-2 pr-3 text-ink-soft dark:text-stone-200">
                         <div className="flex items-center gap-1.5">
                           <div className="min-w-0 flex-1">{renderName(row)}</div>
                           {canExpand && (
@@ -243,35 +244,35 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
                               onClick={() => setExpanded(isOpen ? null : row.key)}
                               aria-label={isOpen ? 'Свернуть' : 'Подробнее'}
                               aria-expanded={isOpen}
-                              className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                              className="shrink-0 rounded p-1 text-ink-faint transition-colors hover:bg-stone-100 hover:text-ink dark:hover:bg-stone-800 dark:hover:text-stone-200"
                             >
                               <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                             </button>
                           )}
                         </div>
                       </td>
-                      <td className="py-2 pl-2 text-right tabular-nums text-zinc-600 dark:text-zinc-300">{row.total}</td>
-                      <td className="py-2 pl-2 text-right tabular-nums text-zinc-500 dark:text-zinc-400">{row.remaining}</td>
-                      <td className="hidden py-2 pl-2 text-right tabular-nums text-zinc-500 dark:text-zinc-400 sm:table-cell">
+                      <td className="py-2 pl-2 text-right tabular-nums text-ink-soft dark:text-stone-300">{row.total}</td>
+                      <td className="py-2 pl-2 text-right tabular-nums text-ink-muted dark:text-stone-400">{row.remaining}</td>
+                      <td className="hidden py-2 pl-2 text-right tabular-nums text-ink-muted dark:text-stone-400 sm:table-cell">
                         {academicHoursLabel(row.academicHours)}
                       </td>
-                      <td className="hidden py-2 pl-2 text-right tabular-nums text-zinc-500 dark:text-zinc-400 sm:table-cell">
+                      <td className="hidden py-2 pl-2 text-right tabular-nums text-ink-muted dark:text-stone-400 sm:table-cell">
                         {String(row.share).replace('.', ',')}%
                       </td>
                     </tr>
                     {isOpen && canExpand && (
-                      <tr className="border-t border-zinc-100 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-800/30">
+                      <tr className="border-t border-stone-100 bg-stone-50/60 dark:border-stone-800 dark:bg-stone-800/30">
                         <td colSpan={columns.length} className="px-3 py-2.5">
                           <div className="space-y-2">
                             {details.filter((detail) => detail.values && detail.values.length > 0).map((detail) => (
                               <div key={detail.label} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                                <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint dark:text-stone-500">
                                   {detail.label}
                                 </span>
                                 {detail.values.map((value) => (
                                   <span
                                     key={value}
-                                    className="rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                                    className="rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[11px] text-ink-muted dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300"
                                   >
                                     {value}
                                   </span>
@@ -288,7 +289,7 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
             </tbody>
             {current.id === 'groups' && (
               <tfoot>
-                <tr className="border-t border-zinc-200 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
+                <tr className="border-t border-stone-200 text-xs font-medium text-ink-soft dark:border-stone-700 dark:text-stone-300">
                   <td className="py-2 pr-3">Итого по группам</td>
                   <td className="py-2 pl-2 text-right tabular-nums">{view.totals.groupPairs}</td>
                   <td className="py-2 pl-2 text-right tabular-nums">{view.totals.groupRemaining}</td>
@@ -303,11 +304,11 @@ export default function StatsBreakdown({ view, group, teacher, onGroupChange, on
         </div>
 
         {rows.length === 0 && (
-          <p className="py-4 text-center text-sm text-zinc-400 dark:text-zinc-500">Ничего не найдено</p>
+          <p className="py-4 text-center text-sm text-ink-faint dark:text-stone-500">Ничего не найдено</p>
         )}
 
         {current.id === 'groups' && group === 'all' && view.groupAllocations > view.totals.pairs && (
-          <p className="mt-3 text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+          <p className="mt-3 text-[11px] leading-relaxed text-ink-faint dark:text-stone-500">
             Сумма по группам: {view.totals.groupPairs} пар · {academicHoursLabel(view.totals.groupAcademicHours)}.
             Это больше уникальной нагрузки ({view.totals.pairs} пар · {academicHoursLabel(view.totals.academicHours)}),
             потому что потоковые лекции идут в нагрузку каждой группы, но в общем итоге считаются один раз.

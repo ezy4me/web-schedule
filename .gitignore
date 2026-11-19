@@ -4,12 +4,16 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
+dev-dist/
 
 # Logs
 logs/
 *.log
 npm-debug.log*
 dev-server.log
+
+# Local preview screenshots
+_shots/
 
 # Editor / OS
 .DS_Store

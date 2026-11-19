@@ -47,6 +47,12 @@ test('readUrlState принимает период «Остаток»', () => {
   assert.equal(readUrlState('#stats?period=remaining').period, 'remaining')
 })
 
+test('readUrlState принимает вкладку с графиками', () => {
+  const hash = buildHash({ page: 'stats', tab: 'analytics' })
+  assert.match(hash, /tab=analytics/)
+  assert.equal(readUrlState(hash).tab, 'analytics')
+})
+
 test('readUrlState treats unknown page as schedule', () => {
   assert.equal(readUrlState('#teachers?group=4433').page, 'schedule')
   assert.equal(readUrlState('').page, 'schedule')

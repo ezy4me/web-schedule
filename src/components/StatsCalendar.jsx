@@ -5,6 +5,19 @@ import { DAY_LABELS } from '../constants.js'
 import { getSemesterInfo, toDDMM } from '../utils/schedule.js'
 import { capitalizeFirst, pairsLabel } from '../utils/statsFormat.js'
 
+const HEAT = (alpha) => `rgba(162, 83, 44, ${alpha})`
+
+// Пять ступеней интенсивности: 1 пара, 2, 3–4, 5 и больше
+function heatLevel(count) {
+  if (!count) return 0
+  if (count >= 5) return 4
+  if (count >= 3) return 3
+  if (count === 2) return 2
+  return 1
+}
+
+const LEVEL_ALPHA = [0, 0.12, 0.22, 0.32, 0.44]
+
 function buildCells(year, month) {
   const cells = []
   const first = new Date(year, month, 1)
@@ -36,11 +49,11 @@ export default function StatsCalendar({ stats, group, teacher, period, onOpenDat
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs leading-relaxed text-ink-muted dark:text-stone-400">
         Интенсивность — число пар в день. Нажми на день, чтобы открыть его в расписании.
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {months.map((month) => {
           const cells = buildCells(year, month)
           const monthDate = new Date(year, month, 1)
@@ -58,20 +71,20 @@ export default function StatsCalendar({ stats, group, teacher, period, onOpenDat
           return (
             <section
               key={month}
-              className={`rounded-xl border border-zinc-200 bg-white p-3 transition-opacity dark:border-zinc-800 dark:bg-zinc-900 ${dimmed ? 'opacity-40' : ''}`}
+              className={`rounded-xl border border-stone-200 bg-white p-3 transition-opacity dark:border-stone-800 dark:bg-stone-900 ${dimmed ? 'opacity-40' : ''}`}
             >
-              <div className="mb-2 flex items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold capitalize text-zinc-900 dark:text-zinc-100">
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                <h3 className="text-sm font-semibold capitalize text-ink dark:text-stone-100">
                   {format(monthDate, 'LLLL', { locale: ru })}
                 </h3>
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <span className="text-[11px] text-ink-muted dark:text-stone-400">
                   {pairsLabel(monthPairs)} · {monthDays} дн.
                 </span>
               </div>
 
               <div className="mb-1 grid grid-cols-7 gap-1 text-center">
                 {DAY_LABELS.map((day) => (
-                  <span key={day} className="py-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                  <span key={day} className="py-0.5 text-[10px] font-medium text-ink-faint dark:text-stone-500">
                     {day}
                   </span>
                 ))}
@@ -81,7 +94,8 @@ export default function StatsCalendar({ stats, group, teacher, period, onOpenDat
                 {cells.map((cell, index) => {
                   if (!cell) return <span key={`empty-${index}`} />
                   const count = counts.get(toDDMM(cell)) || 0
-                  const strong = count > 0 && 0.12 + count * 0.16 > 0.55
+                  const level = heatLevel(count)
+                  const alpha = LEVEL_ALPHA[level]
                   const isToday = isSameDay(cell, now)
                   return (
                     <button
@@ -90,12 +104,12 @@ export default function StatsCalendar({ stats, group, teacher, period, onOpenDat
                       disabled={!count}
                       onClick={() => onOpenDate(cell)}
                       title={`${capitalizeFirst(format(cell, 'd MMMM', { locale: ru }))} · ${pairsLabel(count)}`}
-                      style={count ? { backgroundColor: `rgba(99, 102, 241, ${Math.min(0.12 + count * 0.16, 0.85)})` } : undefined}
-                      className={`flex aspect-square items-center justify-center rounded-md text-[11px] tabular-nums transition-colors ${
+                      style={count ? { backgroundColor: HEAT(alpha) } : undefined}
+                      className={`flex aspect-square items-center justify-center rounded-md text-[11px] tabular-nums transition-colors sm:text-xs ${
                         count
-                          ? `border border-transparent hover:ring-1 hover:ring-indigo-500 ${strong ? 'font-medium text-white' : 'text-zinc-800 dark:text-zinc-100'}`
-                          : 'cursor-default border border-transparent text-zinc-300 dark:text-zinc-700'
-                      } ${isToday ? 'ring-1 ring-inset ring-indigo-500' : ''}`}
+                          ? 'border border-transparent text-ink hover:ring-1 hover:ring-clay-500 dark:text-stone-100'
+                          : 'cursor-default border border-transparent text-stone-300 dark:text-stone-700'
+                      } ${isToday ? 'ring-1 ring-inset ring-clay-600 dark:ring-clay-400' : ''}`}
                     >
                       {cell.getDate()}
                     </button>
@@ -107,13 +121,13 @@ export default function StatsCalendar({ stats, group, teacher, period, onOpenDat
         })}
       </div>
 
-      <div className="flex items-center justify-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+      <div className="flex items-center justify-center gap-2 text-[11px] text-ink-faint dark:text-stone-500">
         <span>меньше</span>
         {[0, 1, 2, 3, 4].map((level) => (
           <span
             key={level}
-            className={`h-3 w-3 rounded-sm ${level === 0 ? 'bg-zinc-100 dark:bg-zinc-800' : ''}`}
-            style={level ? { backgroundColor: `rgba(99, 102, 241, ${Math.min(0.12 + level * 0.16, 0.85)})` } : undefined}
+            className={`h-3 w-3 rounded-sm ${level === 0 ? 'bg-stone-100 dark:bg-stone-800' : ''}`}
+            style={level ? { backgroundColor: HEAT(LEVEL_ALPHA[level]) } : undefined}
           />
         ))}
         <span>больше</span>
