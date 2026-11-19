@@ -76,15 +76,6 @@ body {
   display: none;
 }
 
-/* Отступ под системный индикатор на iPhone */
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
 @keyframes slide-up {
   from {
     opacity: 0;

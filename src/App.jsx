@@ -613,7 +613,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-paper text-ink transition-colors dark:bg-[#121110] dark:text-stone-100">
       <header className="relative z-30 border-b border-stone-200 bg-paper sm:sticky sm:top-0 dark:border-stone-800 dark:bg-[#121110]">
-        <div className="safe-top mx-auto max-w-5xl px-3 pb-2.5 pt-4 sm:px-4">
+        <div className="mx-auto max-w-5xl px-3 pb-2.5 pt-5 sm:px-4 sm:pt-6">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink text-paper dark:bg-stone-100 dark:text-ink">
@@ -1148,7 +1148,7 @@ export default function App() {
 
       {/* Мобильная навигация по разделам */}
       <nav
-        className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-paper sm:hidden dark:border-stone-800 dark:bg-[#121110]"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-paper sm:hidden dark:border-stone-800 dark:bg-[#121110]"
         aria-label="Разделы"
       >
         <div className="mx-auto grid max-w-5xl grid-cols-2">

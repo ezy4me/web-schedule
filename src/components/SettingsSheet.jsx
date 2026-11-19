@@ -91,7 +91,7 @@ export default function SettingsSheet({
         role="dialog"
         aria-modal="true"
         aria-label="Настройки"
-        className="safe-bottom relative w-full max-w-md animate-slide-up rounded-t-2xl border border-stone-200 bg-white shadow-pop sm:rounded-xl dark:border-stone-800 dark:bg-stone-900"
+        className="relative w-full max-w-md animate-slide-up rounded-t-2xl border border-stone-200 bg-white shadow-pop sm:rounded-xl dark:border-stone-800 dark:bg-stone-900"
       >
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-stone-200 sm:hidden dark:bg-stone-700" />
 
@@ -202,7 +202,7 @@ export default function SettingsSheet({
           </div>
         </div>
 
-        <div className="safe-bottom flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3 dark:border-stone-800">
+        <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3 dark:border-stone-800">
           <button
             type="button"
             onClick={onResetData}

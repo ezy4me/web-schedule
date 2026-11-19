@@ -4,6 +4,17 @@ import { TYPE_STYLES } from '../constants.js'
 import { parseRoom } from '../utils/schedule.js'
 import TypeChip from './TypeChip.jsx'
 
+function Badge({ icon: Icon, children, className = '' }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-md border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-ink-muted dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-300 ${className}`}
+    >
+      {Icon && <Icon size={11} className="shrink-0 text-ink-faint dark:text-stone-500" />}
+      {children}
+    </span>
+  )
+}
+
 export default function LessonCard({ lesson, isNow, onGroupClick, compact = false }) {
   const style = TYPE_STYLES[lesson.type]
   const { building, room } = parseRoom(lesson.room)
@@ -61,25 +72,17 @@ export default function LessonCard({ lesson, isNow, onGroupClick, compact = fals
         </h3>
 
         {(room || building || lesson.teacher) && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-muted dark:text-stone-400">
-            {room && (
-              <span className="inline-flex items-center gap-1">
-                <DoorOpen size={13} className="shrink-0 text-ink-faint dark:text-stone-500" />
-                ауд. {room}
-              </span>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px]">
+            {room && <Badge icon={DoorOpen}>ауд. {room}</Badge>}
+            {building && <Badge icon={Building2}>корп. {building}</Badge>}
+            {lesson.teacher && (
+              <span className="min-w-0 truncate text-[12px] text-ink-muted dark:text-stone-400">{lesson.teacher}</span>
             )}
-            {building && (
-              <span className="inline-flex items-center gap-1">
-                <Building2 size={13} className="shrink-0 text-ink-faint dark:text-stone-500" />
-                корп. {building}
-              </span>
-            )}
-            {lesson.teacher && <span className="min-w-0 truncate">{lesson.teacher}</span>}
           </div>
         )}
 
         {(groupList.length > 0 || dates.length > 0) && (
-          <div className="mt-2.5 flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
             {groupList.length > 0 && (
               <span className="inline-flex flex-wrap items-center gap-1.5">
                 <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint dark:text-stone-500">
@@ -99,9 +102,13 @@ export default function LessonCard({ lesson, isNow, onGroupClick, compact = fals
               </span>
             )}
             {dates.length > 0 && (
-              <span className="inline-flex min-w-0 flex-wrap items-baseline gap-1.5 text-[11px]">
-                <span className="font-medium uppercase tracking-[0.08em] text-ink-faint dark:text-stone-500">Даты</span>
-                <span className="tabular-nums text-ink-muted dark:text-stone-400">{dates.join(' · ')}</span>
+              <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint dark:text-stone-500">
+                  Даты
+                </span>
+                {dates.map((d) => (
+                  <Badge key={d}>{d}</Badge>
+                ))}
               </span>
             )}
           </div>
