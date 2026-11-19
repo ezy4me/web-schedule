@@ -3,7 +3,7 @@ import { format, isSameDay, isTomorrow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ArrowUpRight, ChevronDown } from 'lucide-react'
 import { TYPE_STYLES } from '../constants.js'
-import { isLessonUpcoming } from '../utils/schedule.js'
+import { isLessonUpcoming, parseRoom } from '../utils/schedule.js'
 import { LESSON_ACADEMIC_HOURS } from '../utils/stats.js'
 import { capitalizeFirst, academicHoursLabel, nextLessonHint, pairsLabel } from '../utils/statsFormat.js'
 
@@ -75,7 +75,7 @@ export default function StatsRemaining({ stats, group, teacher, now, onOpenDate 
             <div className="mt-0.5 truncate text-sm font-medium text-ink dark:text-stone-100">{next.subject}</div>
             <div className="truncate text-xs text-ink-muted dark:text-stone-400">
               {capitalizeFirst(format(next.date, 'd MMMM, EEEE', { locale: ru }))} · {next.time}
-              {next.room ? ` · ${next.room}` : ''}
+              {next.room ? ` · ауд. ${parseRoom(next.room).room}` : ''}
             </div>
           </div>
           <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-clay-700 dark:text-clay-300">
@@ -152,7 +152,7 @@ export default function StatsRemaining({ stats, group, teacher, now, onOpenDate 
                               )}
                               {lesson.room && (
                                 <span className="shrink-0 text-[11px] tabular-nums text-ink-faint dark:text-stone-500">
-                                  {lesson.room}
+                                  ауд. {parseRoom(lesson.room).room}
                                 </span>
                               )}
                             </button>

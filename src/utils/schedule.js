@@ -367,6 +367,17 @@ export function splitGroups(value) {
     .filter(Boolean)
 }
 
+// «7 / 219а» → { building: '7', room: '219а' }; «219» → { building: '', room: '219' }
+export function parseRoom(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return { building: '', room: '', raw: '' }
+  const parts = raw.split(/\s*\/\s*/)
+  if (parts.length >= 2 && parts[0]) {
+    return { building: parts[0].trim(), room: parts.slice(1).join(' / ').trim(), raw }
+  }
+  return { building: '', room: raw, raw }
+}
+
 // Пара ещё не прошла: даты позже сегодняшней — всегда; сегодня — если конец пары позже «сейчас»
 export function isLessonUpcoming(lesson, now = new Date()) {
   const day = startOfDay(now)

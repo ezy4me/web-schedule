@@ -3,7 +3,7 @@ import { addDays, format, isSameDay, isToday, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { DAY_LABELS, TYPE_STYLES } from '../constants.js'
-import { getPairsForDate } from '../utils/schedule.js'
+import { getPairsForDate, parseRoom } from '../utils/schedule.js'
 
 const ACCENTS = {
   лек: 'bg-clay-600 dark:bg-clay-400',
@@ -141,17 +141,17 @@ export default function WeekView({
                     type="button"
                     onClick={() => onSelectDate(date)}
                     title={`${lesson.subject} · ${typeLabel(lesson.type)}`}
-                    className="group flex w-full gap-1.5 rounded-md border border-stone-200 bg-white p-1.5 text-left transition-colors hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
+                    className="group flex w-full items-start gap-1.5 rounded-md border border-stone-200 bg-white p-1.5 text-left transition-colors hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
                   >
-                    <span className={`w-[3px] shrink-0 rounded-full ${typeAccent(lesson.type)}`} />
+                    <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${typeAccent(lesson.type)}`} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-1">
                         <span className="text-[11px] font-semibold tabular-nums text-ink-soft dark:text-stone-200">
                           {lesson.time}
                         </span>
-                        {lesson.room && (
+                        {parseRoom(lesson.room).room && (
                           <span className="truncate text-[10px] tabular-nums text-ink-faint dark:text-stone-500">
-                            {lesson.room}
+                            {parseRoom(lesson.room).room}
                           </span>
                         )}
                       </span>

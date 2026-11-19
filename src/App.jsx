@@ -11,14 +11,15 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Building2,
   Clock3,
   Database,
+  DoorOpen,
   Flower2,
   LayoutGrid,
   LayoutList,
   Leaf,
   Loader2,
-  MapPin,
   Moon,
   Settings2,
   Share2,
@@ -41,6 +42,7 @@ import {
   isLessonNow,
   isLessonUpcoming,
   normalizeSchedule,
+  parseRoom,
   SEMESTER_INFO,
 } from './utils/schedule.js'
 import { readUrlState, writeUrlState, parseUrlDate } from './utils/urlState.js'
@@ -60,6 +62,7 @@ import NiceSelect from './components/NiceSelect.jsx'
 import Statistics from './components/Statistics.jsx'
 import WeekView from './components/WeekView.jsx'
 import SettingsSheet from './components/SettingsSheet.jsx'
+import TypeChip from './components/TypeChip.jsx'
 import maximovData from './data/maximov.json'
 
 // Доступные источники расписания (JSON-файлы лежат в public/)
@@ -605,11 +608,12 @@ export default function App() {
   const sourceLabel = (SCHEDULE_SOURCES.find((s) => s.id === sourceId) || {}).label || data.sourceLabel || 'Своё расписание'
   const isCompact = settings.compact
   const pairCountLabel = `${pairs.length} ${pairs.length === 1 ? 'пара' : pairs.length < 5 ? 'пары' : 'пар'}`
+  const nextRoom = parseRoom(nextLesson ? nextLesson.room : '')
 
   return (
     <div className="min-h-screen bg-paper text-ink transition-colors dark:bg-[#121110] dark:text-stone-100">
       <header className="relative z-30 border-b border-stone-200 bg-paper sm:sticky sm:top-0 dark:border-stone-800 dark:bg-[#121110]">
-        <div className="safe-top mx-auto max-w-5xl px-3 pb-2 pt-2.5 sm:px-4">
+        <div className="safe-top mx-auto max-w-5xl px-3 pb-2.5 pt-4 sm:px-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink text-paper dark:bg-stone-100 dark:text-ink">
@@ -927,8 +931,7 @@ export default function App() {
           <>
             {/* Ближайшая пара */}
             {nextLesson && (
-              <section className="relative mb-3 overflow-hidden rounded-xl border border-stone-200 bg-white pl-3 pr-3 py-3 dark:border-stone-800 dark:bg-stone-900">
-                <span className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-clay-600 dark:bg-clay-400" />
+              <section className="relative mb-3 overflow-hidden rounded-xl border border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-stone-100 text-ink-soft dark:bg-stone-800 dark:text-stone-200">
                     <Clock3 size={16} />
@@ -936,6 +939,7 @@ export default function App() {
                   <div className="min-w-0 flex-1 basis-[168px]">
                     <div className="flex flex-wrap items-center gap-x-2 text-[10px] font-medium uppercase tracking-[0.08em] text-clay-700 dark:text-clay-300">
                       <span>Следующая пара</span>
+                      <TypeChip type={nextLesson.type} size="sm" />
                       <span className="normal-case tracking-normal text-ink-faint dark:text-stone-500">
                         {nextLessonHint(nextLesson, now)}
                       </span>
@@ -943,16 +947,22 @@ export default function App() {
                     <p className="mt-0.5 truncate text-sm font-semibold text-ink dark:text-stone-50">
                       {nextLesson.subject}
                     </p>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-muted dark:text-stone-400">
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-ink-muted dark:text-stone-400">
                       <span className="font-medium tabular-nums text-ink-soft dark:text-stone-300">{nextLesson.time}</span>
                       <span>{format(nextLesson.date, 'd MMMM, EEEE', { locale: ru })}</span>
-                      {nextLesson.room && (
+                      {nextRoom.room && (
                         <span className="inline-flex items-center gap-1">
-                          <MapPin size={11} />
-                          {nextLesson.room}
+                          <DoorOpen size={11} className="text-ink-faint dark:text-stone-500" />
+                          ауд. {nextRoom.room}
                         </span>
                       )}
-                      {nextLesson.groups.length > 0 && <span>{nextLesson.groups.join(', ')}</span>}
+                      {nextRoom.building && (
+                        <span className="inline-flex items-center gap-1">
+                          <Building2 size={11} className="text-ink-faint dark:text-stone-500" />
+                          корп. {nextRoom.building}
+                        </span>
+                      )}
+                      {nextLesson.groups.length > 0 && <span>гр. {nextLesson.groups.join(', ')}</span>}
                     </p>
                   </div>
                   <button
