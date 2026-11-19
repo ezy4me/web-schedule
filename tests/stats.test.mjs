@@ -197,6 +197,22 @@ test('весенний семестр: индекс занятий maximov', () 
   ])
 })
 
+test('весенний семестр: индекс занятий shumilkin', () => {
+  const shumilkin = buildLessonStats(readSource('shumilkin.json'), springYearStart, 'spring')
+  assert.equal(shumilkin.lessons.length, 296)
+  assert.equal(shumilkin.groups.length, 12)
+  assert.ok(shumilkin.groups.includes('4438'))
+  assert.equal(
+    aggregateLessonStats(shumilkin.lessons, {
+      period: 'semester',
+      now: springNow,
+      semester: 'spring',
+      year: 2027,
+    }).totals.groupPairs,
+    380
+  )
+})
+
 test('весенний семестр: нагрузка по месяцам', () => {
   const months = [0, 1, 2, 3, 4, 5].map(
     (month) =>
